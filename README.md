@@ -1,51 +1,58 @@
-# Link-Span — mods de exemplo
+**English** · [Português (Brasil)](README.pt-BR.md)
 
-Mods de exemplo e demos do [Link-Span](https://github.com/BaiterYamato/link-span), o modloader de Ship of
-Harkinian (OoT) e 2 Ship 2 Harkinian (MM). Até 2026-10-10 eles moravam no próprio link-span (`examples/`) e no
-host OoT (`soh/native-sdk/*-demo`, `soh/native-sdk/unbound-core/{scene,field,custom-actors}-demo`); foram separados
-para o modloader carregar só o que é dele.
+# Link-Span — example mods
 
-| Pasta | O que tem |
+Example mods and demos for [Link-Span](https://github.com/BaiterYamato/link-span), the modloader for Ship of
+Harkinian (OoT) and 2 Ship 2 Harkinian (MM). Until 2026-10-10 they lived inside link-span itself (`examples/`) and
+inside the OoT host (`soh/native-sdk/*-demo`, `soh/native-sdk/unbound-core/{scene,field,custom-actors}-demo`). They
+were split out so the modloader only ships what belongs to it.
+
+Guides: [writing Lua mods](https://github.com/BaiterYamato/link-span/blob/main/docs/writing-mods.md),
+[native OoT mods](https://github.com/BaiterYamato/link-span/blob/main/docs/native-mods.md) and the
+[wiki](https://github.com/BaiterYamato/link-span/wiki).
+
+| Folder | Contents |
 |---|---|
-| `lua/` | 23 mods Lua (`manifest.toml` + `main.lua`): hello-world, hotkeys, atores, saves, formas do MM, mini-rando… |
-| `oot-native/` | demos nativos do OoT (DLL de provider): crash, escape hatch, familiar, hooks, item, save, view, world, render CEL e o Shovel (item que usa o serviço do NEI) |
-| `oot-native/unbound/` | demos do Unbound: registro de cena (Hyrule Field copiado), patch de atores de sala e o pacote de atores do formato 0.9 |
-| `oot-native/common/` | `package_assets` (achar `assets/` do pacote), usado pelos demos do Unbound |
-| `tools/` | scripts de pacote dos demos nativos (PowerShell 5.1) |
+| `lua/` | 23 Lua mods (`manifest.toml` + `main.lua`): hello-world, hotkeys, actors, saves, MM forms, mini-rando… |
+| `oot-native/` | native OoT demos (provider DLLs): crash, escape hatch, familiar, hooks, item, save, view, world, CEL rendering and Shovel (an item that uses the NEI service) |
+| `oot-native/unbound/` | Unbound demos: scene registration (a copy of Hyrule Field), room actor patch and the format 0.9 actor package |
+| `oot-native/common/` | `package_assets` (finds the package `assets/` folder), used by the Unbound demos |
+| `tools/` | packaging scripts for the native demos (PowerShell 5.1) |
 
-## Mods Lua
+## Lua mods
 
-Cada pasta de `lua/` é um mod: copie a pasta para `mods/` do jogo. Para validar o manifesto e rodar os testes que
-alguns trazem (`tests/`), use o `shipmod.py` do link-span:
+Each folder under `lua/` is one mod: copy the folder into the game's `mods/` folder. To validate the manifest and run
+the tests some of them ship (`tests/`), use `shipmod.py` from link-span:
 
-```
+```powershell
 python <link-span>/tools/shipmod.py validate lua/hello-world
 python <link-span>/tools/shipmod.py test lua/frame-counter
 ```
 
-## Demos nativos (OoT)
+## Native demos (OoT)
 
-Precisam do SDK do host: o ZIP `LinkSpan-OoT-SDK-*.zip` da release, ou o `OotNativeSdk.cmake` de um build do host
-(`build/x64/native-sdk/Release/OotNativeSdk.cmake`). Uma DLL só carrega no host com o mesmo layout id.
+They need the host SDK: the `LinkSpan-OoT-SDK-*.zip` from the release, or the `OotNativeSdk.cmake` from a host build
+(`build/x64/native-sdk/Release/OotNativeSdk.cmake`). A DLL only loads in a host with the same layout id.
 
-```
+```powershell
 cmake -S oot-native/crash-demo -B build/crash-demo -A x64 -DOOT_NATIVE_SDK=<...>/OotNativeSdk.cmake
 cmake --build build/crash-demo --config Release
 ```
 
-O Shovel Demo também pede o header público do NEI: `-DLINKSPAN_NEI_INCLUDE=<pasta include/ do pacote NEI>`.
-Os demos do Unbound compilam juntos: `cmake -S oot-native/unbound ...`.
+The Shovel Demo also needs the public NEI header: `-DLINKSPAN_NEI_INCLUDE=<include/ folder of the NEI package>`.
+The Unbound demos build together: `cmake -S oot-native/unbound ...`.
 
-Os scripts de `tools/` empacotam a DLL compilada. Rode-os **da raiz de um checkout do host**: os padrões de
-`-Validator` e `-LayoutHeader` apontam para o build dele. A fonte de cada demo vem deste repositório.
+The scripts in `tools/` package a built DLL. Run them **from the root of a host checkout**: the `-Validator` and
+`-LayoutHeader` defaults point at its build. Each demo's source comes from this repository.
 
-```
+```powershell
 powershell -File <link-span-examples>/tools/package-crash-demo.ps1 -CoreExtension -ProviderDirectory build/crash-demo/mod/provider
 ```
 
-O `crash-demo` derruba o jogo de propósito: serve para provar a recuperação do boot guard. Não instale fora de teste.
+`crash-demo` crashes the game on purpose: it exists to prove the boot guard recovery. Do not install it outside
+testing.
 
-## Licença
+## License
 
-O trabalho próprio do Link-Span está em domínio público pela CC0 1.0 (`LICENSE`). Veja `NOTICE.md` para as partes
-que seguem com outros autores.
+Link-Span's own work is dedicated to the public domain under CC0 1.0 (`LICENSE`). See `NOTICE.md` for the parts that
+remain with other authors.
