@@ -1,16 +1,16 @@
-# Pulo
+**English** · [Português (Brasil)](README.pt-BR.md)
 
-Mod de exemplo que combina a infraestrutura comum de hotkeys com a capability de
-pulo do jogo ativo. Funciona em **ambos os jogos suportados**.
+# Jump
 
-- Em **Ocarina of Time (Ship of Harkinian)**: usa `oot.player.jump`.
-- Em **Majora's Mask (2Ship2Harkinian)**: usa `mm.player.jump`.
+Example mod that combines the common hotkey infrastructure with the active game's jump capability. It works in **both
+supported games**.
 
-Copie a pasta para o diretório `mods` do SoH ou do 2Ship. Durante o jogo,
-pressione `K` para pular; o atalho pode ser alterado nas configurações do
-ShipLua. O pulo só é aplicado quando o jogador está no chão.
+- In **Ocarina of Time (Ship of Harkinian)**: uses `oot.player.jump`.
+- In **Majora's Mask (2Ship2Harkinian)**: uses `mm.player.jump`.
 
-Declara `games = ["oot", "mm"]` e lista `oot.player.jump` / `mm.player.jump`
-como capabilities **opcionais**. Em runtime, a função de pulo é resolvida pela
-capability anunciada pelo host — assim o mesmo mod carrega nos dois jogos sem
-simular uma ação incompatível.
+Copy the folder into the `mods` folder of SoH or 2Ship. In game, press `K` to jump; the shortcut can be changed in the
+Link-Span settings. The jump only applies while the player is on the ground.
+
+It declares `games = ["oot", "mm"]` and lists `oot.player.jump` / `mm.player.jump` as **optional** capabilities. At
+runtime, the jump function is resolved from the capability the host advertises, so the same mod loads in both games
+without faking an incompatible action.

@@ -1,25 +1,19 @@
-# Olá, mundo
+**English** · [Português (Brasil)](README.pt-BR.md)
 
-Este é o primeiro mod comum do ShipLua. O mesmo pacote funciona no Shipwright e no
-2Ship2Harkinian porque usa apenas a API compartilhada.
+# Hello, world
 
-## Gerar o pacote
+This is the first common Link-Span mod. The same package works on Shipwright and on 2Ship2Harkinian because it only
+uses the shared API.
 
-```powershell
-cmake --build build --target package_examples
-```
+## Install
 
-O arquivo será criado em `build/examples/hello-world.shipmod`. A geração fixa ordem,
-timestamp e permissões das entradas para produzir o mesmo conteúdo em builds iguais.
-
-## Instalar
-
-Copie `hello-world.shipmod` para a pasta `mods` do diretório gravável do jogo. Na
-inicialização, o log deve registrar uma das mensagens:
+Copy the folder into the `mods` folder of the game's writable directory. To ship it as a single file, zip the folder
+contents (with `manifest.toml` at the root of the archive) and name it `hello-world.shipmod`. On startup, the log
+should show one of these messages:
 
 ```text
-Hello from oot host=<versão>
-Hello from mm host=<versão>
+Hello from oot host=<version>
+Hello from mm host=<version>
 ```
 
-O mod não solicita permissões e não acessa arquivos, rede, DLLs ou ativos dos jogos.
+The mod requests no permissions and does not touch files, the network, DLLs or game assets.

@@ -1,18 +1,18 @@
--- hello-runtime: o mod mínimo do release v0.1.0-alpha.1 (plan-sdk.md §29).
--- Usa apenas a API comum: logging, feature detection, eventos e hotkeys.
--- O mesmo arquivo roda nos dois hosts e no mock runtime (MODSDK-004).
+-- hello-runtime: the minimal mod from the v0.1.0-alpha.1 release.
+-- Uses only the common API: logging, feature detection, events and hotkeys.
+-- The same file runs on both hosts and on the mock runtime.
 local ship = require("ship")
 
 ship.events.on("game.ready", function()
-    ship.log.info("hello-runtime carregado em " .. ship.game.id())
+    ship.log.info("hello-runtime loaded on " .. ship.game.id())
 
-    -- Feature detection: a hotkey só é registrada quando o host suporta input.
+    -- Feature detection: the hotkey is registered only when the host supports input.
     if ship.capabilities.has("core.input") then
         ship.hotkeys.register("hello", { default = "H", label = "Hello runtime" }, function()
             ship.log.info("Hello from " .. ship.game.id() .. "!")
         end)
-        ship.log.info("hello-runtime pronto — aperte H (rebindável)")
+        ship.log.info("hello-runtime ready — press H (rebindable)")
     else
-        ship.log.warn("capability core.input indisponível — hotkey do hello-runtime desativada")
+        ship.log.warn("capability core.input unavailable — hello-runtime hotkey disabled")
     end
 end)

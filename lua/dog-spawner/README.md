@@ -1,16 +1,15 @@
+**English** · [Português (Brasil)](README.pt-BR.md)
+
 # dog-spawner
 
-Mod de exemplo que funciona em **ambos os jogos suportados**: aperte **F**
-(rebindável) e um cachorro aparece na sua frente.
+Example mod that works in **both supported games**: press **F** (rebindable) and a dog appears in front of you.
 
-- Em **Ocarina of Time (Ship of Harkinian)**: spawna o cachorro do `Hyrule Market`
-  (`En_Dog`) via `ship.oot.spawn_dog()`.
-- Em **Majora's Mask (2Ship2Harkinian)**: spawna o cachorro de `Clock Town`
-  (`En_Dg`) via `ship.mm.spawn_dog()`.
+- In **Ocarina of Time (Ship of Harkinian)**: spawns the `Hyrule Market` dog (`En_Dog`) via `ship.oot.spawn_dog()`.
+- In **Majora's Mask (2Ship2Harkinian)**: spawns the `Clock Town` dog (`En_Dg`) via `ship.mm.spawn_dog()`.
 
-Demonstra o padrão de **mod multi-jogo com branching por capability**: a mesma
-hotkey é registrada nos dois hosts, mas a função de spawn é resolvida em runtime
-conforme a capability anunciada (`oot.spawn_dog` ou `mm.spawn_dog`).
+It shows the pattern for a **multi-game mod that branches on capabilities**: the same hotkey is registered on both
+hosts, but the spawn function is resolved at runtime from the advertised capability (`oot.spawn_dog` or
+`mm.spawn_dog`).
 
 ```lua
 local function resolveSpawnDog()
@@ -24,19 +23,16 @@ local function resolveSpawnDog()
 end
 ```
 
-## Instalar
+## Install
 
-Copie esta pasta (ou empacote como `dog-spawner.shipmod`) para a pasta `mods/`
-do 2Ship ou do SoH e abra o jogo. Em jogo, aperte **F**.
+Copy this folder (or package it as `dog-spawner.shipmod`) into the `mods/` folder of 2Ship or SoH and start the game.
+In game, press **F**.
 
-## Notas
+## Notes
 
-- Declara `games = ["oot", "mm"]` e lista `oot.spawn_dog` / `mm.spawn_dog` como
-  capabilities **opcionais** — carrega em ambos os hosts, mas só spawna quando o
-  host oferece a capability correspondente.
-- **OoT**: o cachorro (`ACTOR_EN_DOG`) é o NPC da side-quest da Dog Lady. Spawnar
-  fora do `Hyrule Market` pode fazer o ator ficar parado ou se remover, pois o
-  `En_Dog` valida cena/params no init. Use em `SCENE_MARKET_DAY`/`SCENE_MARKET_NIGHT`
-  para resultado confiável.
-- **MM**: o objeto `object_dog` precisa estar carregado na cena (Clock Town e áreas
-  com cachorros) para o ator renderizar.
+- It declares `games = ["oot", "mm"]` and lists `oot.spawn_dog` / `mm.spawn_dog` as **optional** capabilities: it
+  loads on both hosts, but only spawns when the host offers the matching capability.
+- **OoT**: the dog (`ACTOR_EN_DOG`) is the NPC from the Dog Lady side quest. Spawning it outside `Hyrule Market` can
+  leave the actor standing still or make it remove itself, because `En_Dog` validates the scene and params on init.
+  Use it in `SCENE_MARKET_DAY`/`SCENE_MARKET_NIGHT` for a reliable result.
+- **MM**: the `object_dog` object must be loaded in the scene (Clock Town and areas with dogs) for the actor to render.
