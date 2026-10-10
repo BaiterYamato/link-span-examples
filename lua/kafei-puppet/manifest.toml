@@ -3,7 +3,7 @@ name = "Kafei Puppet"
 version = "0.1.0"
 api = ">=0.4 <0.6"
 entrypoint = "main.lua"
-description = "Aperte K para spawnar um puppet com o esqueleto do Young Link. Com um .otr substituto (ex.: Kafei) na pasta mods, o puppet usa o modelo substituído."
+description = "Press K to spawn a puppet with Young Link's skeleton. With a replacement .otr (e.g. Kafei) in the mods folder, the puppet uses the replaced model."
 authors = ["BaiterYamato"]
 games = ["oot"]
 

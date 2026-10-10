@@ -19,7 +19,7 @@ ship.events.on("game.ready", function()
         return
     end
 
-    ship.hotkeys.register("jump", { default = "J", label = "Pulo" }, function()
+    ship.hotkeys.register("jump", { default = "J", label = "Jump" }, function()
         if not jump() then
             ship.log.debug("pulo ignorado: o jogador precisa estar no chão")
         end

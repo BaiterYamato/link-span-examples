@@ -19,7 +19,7 @@ ship.events.on("game.ready", function()
         return
     end
 
-    ship.hotkeys.register("double_jump_demo", { default = "J", label = "Pulo duplo (demo)" }, function()
+    ship.hotkeys.register("double_jump_demo", { default = "J", label = "Double jump (demo)" }, function()
         local onGround = ship.player.get("on_ground")
         if onGround == 1 then
             return -- pulo normal do jogo cuida do primeiro pulo

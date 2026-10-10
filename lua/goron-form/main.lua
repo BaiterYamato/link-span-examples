@@ -386,7 +386,7 @@ ship.events.on("game.ready", function()
 -- vazia nem um caminho silencioso:
 -- 2/4/11/20/30 = máscara, freeze, quebra e grito; 59 = raio.
 
-    ship.hotkeys.register("goron_form", { default = "G", label = "Forma Goron" }, function()
+    ship.hotkeys.register("goron_form", { default = "G", label = "Goron Form" }, function()
         if transforming then
             -- G também permite desistir antes de a troca visual acontecer.
             transformGeneration = transformGeneration + 1

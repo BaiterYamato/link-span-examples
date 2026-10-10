@@ -1,9 +1,9 @@
 id = "baiteryamato.held_item_demo"
-name = "Item na mão (demo)"
+name = "Held item (demo)"
 version = "0.1.0"
 api = ">=0.4 <0.6"
 entrypoint = "main.lua"
-description = "Prova o mecanismo por trás de 10+ itens customizados em forks reais (Ball and Chain, Gust Jar, Whip...): anexar um modelo à mão do jogador, sem função nativa dedicada por item."
+description = "Shows the mechanism behind 10+ custom items in real forks (Ball and Chain, Gust Jar, Whip...): attaching a model to the player's hand, without a dedicated native function per item."
 authors = ["BaiterYamato"]
 games = ["oot"]
 

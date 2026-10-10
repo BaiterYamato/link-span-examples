@@ -1,9 +1,9 @@
 id = "baiteryamato.survival_demo"
-name = "Sobrevivência (demo)"
+name = "Survival (demo)"
 version = "0.3.0"
 api = ">=0.4 <0.6"
 entrypoint = "main.lua"
-description = "Survival jogável: fome, sede, stamina, temperatura, bolsa persistente e quatro consumíveis equipados no D-pad com ícones e quantidades."
+description = "Playable survival: hunger, thirst, stamina, temperature, a persistent bag and four consumables equipped on the D-pad with icons and counts."
 authors = ["BaiterYamato"]
 games = ["oot"]
 

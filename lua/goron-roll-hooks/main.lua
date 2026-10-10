@@ -22,7 +22,7 @@ ship.events.on("game.ready", function()
 
     ship.hotkeys.register(
         "goron_roll_hooks_demo",
-        { default = "R", label = "Rolamento Goron infinito (ponte de hooks)" },
+        { default = "R", label = "Endless Goron roll (hook bridge)" },
         function()
             enabled = not enabled
             ship.log.info(enabled and "Rolamento Goron infinito: ligado" or "Rolamento Goron infinito: desligado")

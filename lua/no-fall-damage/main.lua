@@ -15,7 +15,7 @@ ship.events.on("game.ready", function()
         return
     end
 
-    ship.hotkeys.register("no_fall_damage", { default = "N", label = "Alternar dano de queda" }, function()
+    ship.hotkeys.register("no_fall_damage", { default = "N", label = "Toggle fall damage" }, function()
         enabled = not enabled
         ship.log.info(enabled and "Dano de queda: normal" or "Dano de queda: desligado")
     end)

@@ -21,7 +21,7 @@ ship.events.on("game.ready", function()
 
     ship.hotkeys.register(
         "clock_tower_to_market",
-        { default = "Y", label = "Voltar para o Mercado (OoT)" },
+        { default = "Y", label = "Back to the Market (OoT)" },
         function()
             local ok, err = ship.world.travel("oot", DESTINATION)
             if not ok then

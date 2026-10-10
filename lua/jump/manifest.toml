@@ -1,9 +1,9 @@
 id = "community.jump"
-name = "Pulo"
+name = "Jump"
 version = "0.2.0"
 api = ">=0.2 <0.6"
 entrypoint = "main.lua"
-description = "Aperte J, com atalho reconfigurável, para fazer o Link pular. Funciona em OoT e em MM."
+description = "Press J (rebindable) to make Link jump. Works in OoT and in MM."
 authors = ["BaiterYamato"]
 games = ["oot", "mm"]
 

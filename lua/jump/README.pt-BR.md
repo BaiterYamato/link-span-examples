@@ -9,7 +9,7 @@ pulo do jogo ativo. Funciona em **ambos os jogos suportados**.
 - Em **Majora's Mask (2Ship2Harkinian)**: usa `mm.player.jump`.
 
 Copie a pasta para o diretório `mods` do SoH ou do 2Ship. Durante o jogo,
-pressione `K` para pular; o atalho pode ser alterado nas configurações do
+pressione `J` para pular; o atalho pode ser alterado nas configurações do
 Link-Span. O pulo só é aplicado quando o jogador está no chão.
 
 Declara `games = ["oot", "mm"]` e lista `oot.player.jump` / `mm.player.jump`

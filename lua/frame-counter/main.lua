@@ -30,7 +30,7 @@ if ship.capabilities.has("core.timers") then
     end)
 end
 
-ship.hotkeys.register("count", { default = "C", label = "Incrementar contador" }, function()
+ship.hotkeys.register("count", { default = "C", label = "Increment counter" }, function()
     local count
     if hasStorage then
         count = (loadNumber("count") or 0) + 1

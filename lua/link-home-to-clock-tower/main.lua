@@ -11,7 +11,7 @@ ship.events.on("game.ready", function()
 
     ship.hotkeys.register(
         "link_home_to_clock_tower",
-        { default = "Y", label = "Ir para a entrada da Torre do Relógio" },
+        { default = "Y", label = "Go to the Clock Tower entrance" },
         function()
             ship.world.travel("mm", "mm.clock_tower.entrance")
         end

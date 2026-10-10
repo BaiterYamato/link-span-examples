@@ -32,25 +32,25 @@ local display = {
 
 local ITEMS = {
     water = {
-        label = "AGUA",
+        label = "WATER",
         icon = "textures/icon_item_static/gItemIconBottlePotionBlueTex",
         hunger = 0,
         thirst = 35,
     },
     ration = {
-        label = "RACAO",
+        label = "RATION",
         icon = "textures/icon_item_static/gItemIconBottleMilkFullTex",
         hunger = 45,
         thirst = 10,
     },
     fruit = {
-        label = "FRUTA",
+        label = "FRUIT",
         icon = "textures/icon_item_static/gItemIconOddMushroomTex",
         hunger = 12,
         thirst = 2,
     },
     cooked_fish = {
-        label = "PEIXE",
+        label = "FISH",
         icon = "textures/icon_item_static/gItemIconBottleFishTex",
         hunger = 35,
         thirst = 0,
@@ -422,7 +422,7 @@ ship.events.on("game.ready", function()
     end
     ship.timer.every(20, update)
     ship.hotkeys.register("survival_supplies", {
-        default = "H", label = "Survival: coletar suprimentos de teste",
+        default = "H", label = "Survival: collect test supplies",
     }, function()
         if not sync_slot() then return end
         S.bag.water = math.min(9, S.bag.water + 2)

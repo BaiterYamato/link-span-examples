@@ -1,9 +1,9 @@
 id = "baiteryamato.goron_form"
-name = "Forma Goron"
+name = "Goron Form"
 version = "0.1.41"
 api = ">=0.4 <0.6"
 entrypoint = "main.lua"
-description = "Aperte G para virar Goron: imunidade a fogo, peso pesado e rolamento contínuo dirigível. Composto inteiramente de primitivas — nenhuma delas é específica do Goron."
+description = "Press G to become a Goron: fire immunity, heavy weight and a steerable continuous roll. Built entirely from primitives — none of them Goron-specific."
 authors = ["BaiterYamato"]
 games = ["oot"]
 

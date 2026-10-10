@@ -1,9 +1,9 @@
 id = "linkspan.link_home_to_clock_tower"
-name = "Casa do Link para Torre do Relógio"
+name = "Link's House to Clock Tower"
 version = "0.1.0"
 api = ">=0.3 <0.6"
 entrypoint = "main.lua"
-description = "Solicita uma viagem portátil de OoT para a entrada da torre em MM."
+description = "Requests a portable trip from OoT to the tower entrance in MM."
 authors = ["BaiterYamato"]
 games = ["oot", "mm"]
 requires_both_games = true

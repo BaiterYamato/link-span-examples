@@ -19,7 +19,7 @@ ship.events.on("game.ready", function()
         return
     end
 
-    ship.hotkeys.register("held_item_demo", { default = "I", label = "Item na mão (demo)" }, function()
+    ship.hotkeys.register("held_item_demo", { default = "I", label = "Held item (demo)" }, function()
         held = not held
         ship.oot.player.set_held_item_model("right_hand", held and MODEL or nil)
         -- Slot genérico: qualquer mod pode guardar estado próprio aqui, sem

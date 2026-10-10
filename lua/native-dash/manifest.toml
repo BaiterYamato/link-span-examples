@@ -1,5 +1,5 @@
 id = "example.native_dash"
-name = "Dash nativo independente"
+name = "Standalone native dash"
 version = "1.0.0"
 api = ">=0.5 <1.0"
 entrypoint = "main.lua"

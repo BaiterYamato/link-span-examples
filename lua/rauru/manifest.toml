@@ -1,9 +1,9 @@
 id = "baiteryamato.rauru"
-name = "Rauru (OOT em MM)"
+name = "Rauru (OOT in MM)"
 version = "0.1.0"
 api = ">=0.4 <0.6"
 entrypoint = "main.lua"
-description = "Aperte K para spawnar Rauru, o Sábio da Luz de Ocarina of Time, dentro de Majora's Mask — o reverso da estátua da Elegia."
+description = "Press K to spawn Rauru, Ocarina of Time's Sage of Light, inside Majora's Mask — the reverse of the Elegy statue."
 authors = ["BaiterYamato"]
 games = ["mm"]
 

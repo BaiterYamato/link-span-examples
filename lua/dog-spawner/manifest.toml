@@ -3,7 +3,7 @@ name = "Dog Spawner"
 version = "0.2.0"
 api = ">=0.2 <0.6"
 entrypoint = "main.lua"
-description = "Aperte F (rebindável) para spawnar um cachorro. Funciona em OoT (Hyrule Market) e em MM (Clock Town)."
+description = "Press F (rebindable) to spawn a dog. Works in OoT (Hyrule Market) and in MM (Clock Town)."
 authors = ["BaiterYamato"]
 games = ["oot", "mm"]
 

@@ -13,7 +13,7 @@ ship.events.on("game.ready", function()
         return
     end
 
-    ship.hotkeys.register("oot_kokiri_sword", { default = "T", label = "Espada Kokiri: OoT/MM" }, function()
+    ship.hotkeys.register("oot_kokiri_sword", { default = "T", label = "Kokiri Sword: OoT/MM" }, function()
         local wanted = using_oot and "mm" or "oot"
         if not ship.mm.player.set_sword_skin(wanted) then
             ship.log.warn("não deu para trocar a espada — o oot.o2r do OoT está montado?")
