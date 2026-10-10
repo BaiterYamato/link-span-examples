@@ -8,16 +8,16 @@ ship.events.on("game.frame", function()
     frames = frames + 1
     if frames % 60 == 0 then
         local stats, failure = ship.native.call("stats", "")
-        ship.log.info("cel-render-demo: " .. (stats or ("falhou: " .. tostring(failure))))
+        ship.log.info("cel-render-demo: " .. (stats or ("failed: " .. tostring(failure))))
     end
 end)
 
 ship.hotkeys.register("toggle_cel_render_demo", { default = "Y", label = "CEL demo: ligar/desligar" }, function()
     local result, failure = ship.native.call("toggle", "")
-    ship.log.info("cel-render-demo: " .. (result or ("falhou: " .. tostring(failure))))
+    ship.log.info("cel-render-demo: " .. (result or ("failed: " .. tostring(failure))))
 end)
 
-ship.hotkeys.register("mode_cel_render_demo", { default = "U", label = "CEL demo: modo (tudo/toon/sombra/Link sem toon)" }, function()
+ship.hotkeys.register("mode_cel_render_demo", { default = "U", label = "CEL demo: mode (all/toon/shadow/Link without toon)" }, function()
     local result, failure = ship.native.call("mode", "")
-    ship.log.info("cel-render-demo: " .. (result or ("falhou: " .. tostring(failure))))
+    ship.log.info("cel-render-demo: " .. (result or ("failed: " .. tostring(failure))))
 end)

@@ -42,9 +42,9 @@ local function gain_xp(amount)
     end
     save_state() -- write-through: sobrevive a fechar o jogo no mesmo instante
     if leveled then
-        ship.log.info(("LEVEL UP! agora nível %d"):format(state.level))
+        ship.log.info(("LEVEL UP! now level %d"):format(state.level))
     else
-        ship.log.info(("+%d XP (nível %d, %d/%d)"):format(amount, state.level, state.xp, xp_for_next(state.level)))
+        ship.log.info(("+%d XP (level %d, %d/%d)"):format(amount, state.level, state.xp, xp_for_next(state.level)))
     end
 end
 
@@ -53,12 +53,12 @@ ship.events.on("game.ready", function()
         return
     end
     if not ship.capabilities.has("hooks.bridge") or not ship.capabilities.has("core.storage") then
-        ship.log.warn("host sem hooks.bridge ou core.storage — leveling indisponível")
+        ship.log.warn("host lacks hooks.bridge or core.storage — leveling unavailable")
         return
     end
 
     load_state()
-    ship.log.info(("Leveling pronto — nível %d, %d/%d XP. Derrote inimigos para ganhar XP.")
+    ship.log.info(("Leveling ready — level %d, %d/%d XP. Defeat enemies to earn XP.")
         :format(state.level, state.xp, xp_for_next(state.level)))
 
     ship.events.on("hook.oot.enemy.defeat", function(payload)

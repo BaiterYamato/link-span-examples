@@ -8,6 +8,6 @@ ship.events.on("game.frame", function()
     frames = frames + 1
     if frames % 60 == 0 then
         local stats, failure = ship.native.call("stats", "")
-        ship.log.info("hooks-demo: " .. (stats or ("falhou: " .. tostring(failure))))
+        ship.log.info("hooks-demo: " .. (stats or ("failed: " .. tostring(failure))))
     end
 end)

@@ -15,14 +15,14 @@ end
 ship.events.on("game.ready", function()
     local jump = resolveJump()
     if jump == nil then
-        ship.log.warn("nenhuma capability de pulo disponível — mod de pulo desativado")
+        ship.log.warn("no jump capability available — jump mod disabled")
         return
     end
 
     ship.hotkeys.register("jump", { default = "J", label = "Jump" }, function()
         if not jump() then
-            ship.log.debug("pulo ignorado: o jogador precisa estar no chão")
+            ship.log.debug("jump ignored: the player must be on the ground")
         end
     end)
-    ship.log.info("Pulo pronto — aperte J ou altere o atalho nas configurações do ShipLua")
+    ship.log.info("Jump ready — press J or change the shortcut in the Link-Span settings")
 end)

@@ -1,7 +1,7 @@
 local ship = require("ship")
 
 describe("survival demo", function()
-    it("bloqueia fora de gameplay e consome exatamente um item útil", function()
+    it("blocks outside gameplay and consumes exactly one useful item", function()
         local mode = "paused"
         ship.game.state = function()
             return { mode = mode, save_slot = 0 }
@@ -40,7 +40,7 @@ describe("survival demo", function()
         assert.equals(waterAfter, ship.storage.get("save.0.bag.water"))
     end)
 
-    it("desenha HUD e quickslots sem erro no hook nativo", function()
+    it("draws the HUD and quickslots without errors in the native hook", function()
         assert.equals(1, mock.events.emit("hook.oot.hud.draw", {}))
     end)
 end)

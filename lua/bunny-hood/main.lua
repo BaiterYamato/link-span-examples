@@ -33,18 +33,18 @@ ship.events.on("game.ready", function()
     local ok = ship.capabilities.has("oot.player.bunny_hood")
         or (ship.capabilities.has("oot.player.mask") and ship.capabilities.has("player.speed"))
     if not ok then
-        ship.log.warn("host sem as capabilities de máscara/velocidade")
+        ship.log.warn("host lacks the mask/speed capabilities")
         return
     end
 
     ship.hotkeys.register("bunny_hood", { default = "U", label = "Bunny Hood (MM speed)" }, function()
         if not set(not wearing) then
-            ship.log.warn("não deu para trocar a Bunny Hood — precisa estar em jogo")
+            ship.log.warn("could not toggle the Bunny Hood — you need to be in game")
             return
         end
         wearing = not wearing
-        ship.log.info(wearing and "Bunny Hood equipada — corra!" or "Bunny Hood guardada")
+        ship.log.info(wearing and "Bunny Hood on — run!" or "Bunny Hood put away")
     end)
 
-    ship.log.info("Bunny Hood pronta — aperte U para equipar/remover")
+    ship.log.info("Bunny Hood ready — press U to put it on/take it off")
 end)

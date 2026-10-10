@@ -14,7 +14,7 @@ ship.events.on("game.ready", function()
         return
     end
     if not ship.capabilities.has("hooks.bridge") then
-        ship.log.warn("host sem hooks.bridge — atualize o Link-Span")
+        ship.log.warn("host lacks hooks.bridge — update Link-Span")
         return
     end
 
@@ -25,7 +25,7 @@ ship.events.on("game.ready", function()
         { default = "R", label = "Endless Goron roll (hook bridge)" },
         function()
             enabled = not enabled
-            ship.log.info(enabled and "Rolamento Goron infinito: ligado" or "Rolamento Goron infinito: desligado")
+            ship.log.info(enabled and "Endless Goron roll: on" or "Endless Goron roll: off")
         end
     )
 
@@ -59,5 +59,5 @@ ship.events.on("game.ready", function()
         end
     end)
 
-    ship.log.info("Rolamento Goron infinito pronto — aperte R, depois role e segure A")
+    ship.log.info("Endless Goron roll ready — press R, then roll and hold A")
 end)

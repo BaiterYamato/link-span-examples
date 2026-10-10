@@ -2,34 +2,34 @@
 -- O runner emite game.ready antes de executar este arquivo.
 local ship = require("ship")
 
-describe("contador", function()
-    it("registra início no game.ready", function()
+describe("counter", function()
+    it("logs the start on game.ready", function()
         local encontrado = false
         for _, entry in ipairs(mock.log.entries()) do
-            if string.find(entry.message, "contador iniciado", 1, true) ~= nil then
+            if string.find(entry.message, "counter started", 1, true) ~= nil then
                 encontrado = true
                 break
             end
         end
-        assert.is_true(encontrado, "esperava log de início do mod")
+        assert.is_true(encontrado, "expected the mod start log")
     end)
 
-    it("detecta as capabilities centrais do mock", function()
+    it("detects the mock core capabilities", function()
         assert.is_true(ship.capabilities.has("core.events"))
         assert.is_true(ship.capabilities.has("core.timers"))
         assert.is_true(ship.capabilities.has("core.storage"))
         assert.is_true(ship.capabilities.has("core.input"))
     end)
 
-    it("incrementa ao pressionar C", function()
+    it("increments when C is pressed", function()
         mock.reset()
-        assert.equals(1, mock.input.press("C"), "uma hotkey deve disparar")
+        assert.equals(1, mock.input.press("C"), "one hotkey should fire")
         assert.equals(1, tonumber(ship.storage.get("count")))
         mock.input.press("C")
         assert.equals(2, tonumber(ship.storage.get("count")))
     end)
 
-    it("emite input.hotkey ao pressionar a tecla", function()
+    it("emits input.hotkey when the key is pressed", function()
         mock.reset()
         local eventos = 0
         ship.events.on("input.hotkey", function(event)
@@ -41,7 +41,7 @@ describe("contador", function()
         assert.equals(1, eventos)
     end)
 
-    it("conta um tick a cada 10 frames", function()
+    it("counts one tick every 10 frames", function()
         mock.reset()
         mock.timer.advance(10)
         assert.equals(1, tonumber(ship.storage.get("ticks")))
@@ -51,7 +51,7 @@ describe("contador", function()
         assert.equals(2, tonumber(ship.storage.get("ticks")))
     end)
 
-    it("storage persiste durante a sessão e delete remove a chave", function()
+    it("storage persists during the session and delete removes the key", function()
         mock.reset()
         ship.storage.set("anotacao", "valor")
         assert.equals("valor", ship.storage.get("anotacao"))

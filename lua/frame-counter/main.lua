@@ -16,8 +16,8 @@ local function loadNumber(key)
 end
 
 ship.events.on("game.ready", function()
-    local persistence = hasStorage and "persistente" or "somente em memória"
-    ship.log.info("contador iniciado em " .. ship.game.id() .. " (" .. persistence .. ")")
+    local persistence = hasStorage and "persistent" or "memory only"
+    ship.log.info("counter started on " .. ship.game.id() .. " (" .. persistence .. ")")
 end)
 
 if ship.capabilities.has("core.timers") then

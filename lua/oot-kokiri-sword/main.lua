@@ -9,19 +9,19 @@ local using_oot = false
 
 ship.events.on("game.ready", function()
     if not ship.capabilities.has("mm.player.sword_skin") then
-        ship.log.warn("mm.player.sword_skin indisponível neste host")
+        ship.log.warn("mm.player.sword_skin unavailable on this host")
         return
     end
 
     ship.hotkeys.register("oot_kokiri_sword", { default = "T", label = "Kokiri Sword: OoT/MM" }, function()
         local wanted = using_oot and "mm" or "oot"
         if not ship.mm.player.set_sword_skin(wanted) then
-            ship.log.warn("não deu para trocar a espada — o oot.o2r do OoT está montado?")
+            ship.log.warn("could not switch the sword — is the OoT oot.o2r mounted?")
             return
         end
         using_oot = not using_oot
-        ship.log.info("espada Kokiri agora usa o visual " .. (using_oot and "do OoT" or "do MM"))
+        ship.log.info("Kokiri Sword now uses the " .. (using_oot and "OoT" or "MM") .. " look")
     end)
 
-    ship.log.info("Espada Kokiri pronta — aperte T para alternar OoT/MM (empunhe a Kokiri para ver)")
+    ship.log.info("Kokiri Sword ready — press T to switch OoT/MM (draw the Kokiri Sword to see it)")
 end)

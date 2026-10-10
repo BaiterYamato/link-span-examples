@@ -2,7 +2,7 @@ local ship = require("ship")
 
 ship.events.on("game.ready", function()
     if not ship.capabilities.has("world.travel") then
-        ship.log.warn("world.travel indisponível; teleporte cross-world desativado")
+        ship.log.warn("world.travel unavailable; cross-world teleport disabled")
         return
     end
     if ship.game.id() ~= "oot" then
@@ -16,5 +16,5 @@ ship.events.on("game.ready", function()
             ship.world.travel("mm", "mm.clock_tower.entrance")
         end
     )
-    ship.log.info("Teleporte pronto: aperte Y na casa do Link")
+    ship.log.info("Teleport ready: press Y in Link's house")
 end)

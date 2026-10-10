@@ -117,7 +117,7 @@ local function load_slot(slot)
     local version = ship.storage.get(key("schema_version"), 0)
     if version ~= 0 and version ~= SCHEMA_VERSION then
         enabled = false
-        ship.log.error("survival: schema de save não suportado: " .. tostring(version))
+        ship.log.error("survival: unsupported save schema: " .. tostring(version))
         return
     end
     S.hunger = clamp(ship.storage.get(key("hunger"), MAX), 0, MAX)
@@ -158,7 +158,7 @@ local function use_item(itemId)
     revealFrames = 100
     dirty = true
     save()
-    ship.log.info(("usou %s — restante %d"):format(item.label, S.bag[itemId]))
+    ship.log.info(("used %s — %d left"):format(item.label, S.bag[itemId]))
     return true
 end
 
@@ -395,8 +395,8 @@ ship.events.on("hook.oot.hud.draw", function()
     -- então a moldura encolheu de 198x61 para caber só as duas barras.
     ship.hud.draw_rect(HUD_X - 7, HUD_Y - 7, 117, 35, 8, 8, 7, 150)
     ship.hud.draw_rect(HUD_X - 7, HUD_Y - 7, 117, 1, 194, 150, 72, 180)
-    draw_bar("FOME", HUD_Y, display.hunger, { 210, 145, 54 })
-    draw_bar("SEDE", HUD_Y + 14, display.thirst, { 55, 145, 230 })
+    draw_bar("FOOD", HUD_Y, display.hunger, { 210, 145, 54 })
+    draw_bar("H2O", HUD_Y + 14, display.thirst, { 55, 145, 230 })
     draw_stamina()
     draw_temperature()
     draw_quickslots()
@@ -416,7 +416,7 @@ ship.events.on("game.ready", function()
     }) do
         if not ship.capabilities.has(capability) then
             enabled = false
-            ship.log.error("survival indisponível: host sem " .. capability)
+            ship.log.error("survival unavailable: host lacks " .. capability)
             return
         end
     end
@@ -431,7 +431,7 @@ ship.events.on("game.ready", function()
         S.bag.cooked_fish = math.min(9, S.bag.cooked_fish + 1)
         dirty, revealFrames = true, 100
         save()
-        ship.log.info("suprimentos de teste coletados")
+        ship.log.info("test supplies collected")
     end)
-    ship.log.info("survival v0.3 ativo: D-pad usa água, ração, fruta e peixe")
+    ship.log.info("survival v0.3 active: the D-pad uses water, ration, fruit and fish")
 end)

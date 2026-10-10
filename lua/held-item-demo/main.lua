@@ -15,7 +15,7 @@ ship.events.on("game.ready", function()
         return
     end
     if not ship.capabilities.has("oot.player.held_item_model") then
-        ship.log.warn("host sem oot.player.held_item_model")
+        ship.log.warn("host lacks oot.player.held_item_model")
         return
     end
 
@@ -25,8 +25,8 @@ ship.events.on("game.ready", function()
         -- Slot genérico: qualquer mod pode guardar estado próprio aqui, sem
         -- precisar de um campo novo na struct nativa do Player.
         ship.player.set("held_item_demo.active", held and 1 or 0)
-        ship.log.info(held and "item anexado à mão" or "item removido")
+        ship.log.info(held and "item attached to the hand" or "item removed")
     end)
 
-    ship.log.info("Item na mão pronto — aperte I")
+    ship.log.info("Held item ready — press I")
 end)

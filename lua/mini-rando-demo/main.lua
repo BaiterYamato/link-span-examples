@@ -36,7 +36,7 @@ ship.events.on("game.ready", function()
         return
     end
     if not ship.capabilities.has("hooks.bridge") or not ship.capabilities.has("core.storage.shared") then
-        ship.log.warn("host sem hooks.bridge ou core.storage.shared — mini-rando indisponível")
+        ship.log.warn("host lacks hooks.bridge or core.storage.shared — mini-rando unavailable")
         return
     end
 
@@ -51,13 +51,13 @@ ship.events.on("game.ready", function()
     end
     ship.storage.shared.set("rando.boot_count", ship.storage.shared.get("rando.boot_count", 0) + 1)
     map = shuffled_map(seed)
-    ship.log.info(("Mini-rando pronto — seed compartilhada %d. Rupias trocadas entre si."):format(seed))
+    ship.log.info(("Mini-rando ready — shared seed %d. Rupees swapped with each other."):format(seed))
 
     ship.events.on("hook.oot.item.give", function(payload)
         -- Loga o que cada check daria (útil para um modder mapear itens reais).
         local target = map[payload.get_item_id]
         if target and target ~= payload.get_item_id then
-            ship.log.info(("check daria gid=%d -> trocando por gid=%d"):format(payload.get_item_id, target))
+            ship.log.info(("check would give gid=%d -> swapping for gid=%d"):format(payload.get_item_id, target))
             ship.hooks.result(target)
         end
     end)

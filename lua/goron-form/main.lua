@@ -300,7 +300,7 @@ end
 ship.events.on("game.frame", function()
     if maskResetPending and ship.oot.player.set_mask("none") then
         maskResetPending = false
-        ship.log.info("máscara residual da forma Goron removida após carregar o save")
+        ship.log.info("leftover Goron form mask removed after loading the save")
     end
     if not transformed or not ship.capabilities.has("oot.player.custom_body") then
         return
@@ -345,7 +345,7 @@ ship.events.on("game.ready", function()
         and ship.capabilities.has("oot.player.weight")
         and ship.capabilities.has("oot.player.roll")
     if not ok then
-        ship.log.warn("host sem as primitivas de habilidade da forma Goron")
+        ship.log.warn("host lacks the Goron form ability primitives")
         return
     end
 
@@ -402,7 +402,7 @@ ship.events.on("game.ready", function()
             if ship.capabilities.has("oot.player.mask") then
                 ship.oot.player.set_mask("none")
             end
-            ship.log.info("transformação Goron cancelada")
+            ship.log.info("Goron transformation cancelled")
             return
         end
         if removeAfterMaskOff then
@@ -448,7 +448,7 @@ ship.events.on("game.ready", function()
                         if ship.capabilities.has("oot.player.mask") then
                             ship.oot.player.set_mask("none")
                         end
-                        ship.log.warn("transformação Goron cancelada pelo estado do jogo")
+                        ship.log.warn("Goron transformation cancelled by the game state")
                         return
                     end
                     transforming = false
@@ -461,19 +461,19 @@ ship.events.on("game.ready", function()
                         ship.oot.audio.set_voice_map(0x6800, 0xC0)
                     end
                 end)
-                ship.log.info("cutscene da máscara Goron iniciada")
+                ship.log.info("Goron mask cutscene started")
                 return
             end
             if canRunCutscene then
                 if ship.capabilities.has("oot.player.mask") then
                     ship.oot.player.set_mask("none")
                 end
-                ship.log.warn("cutscene da máscara recusada pelo estado atual")
+                ship.log.warn("mask cutscene refused in the current state")
                 return
             end
             transformed = true
             apply(true)
-            ship.log.info("forma Goron: corra+A para rolar; R enrola para defesa; B na bola sem espinhos faz ground pound")
+            ship.log.info("Goron form: run+A to roll; R curls up to defend; B while curled without spikes does a ground pound")
         else
             if ship.capabilities.has("core.timers")
                 and ship.capabilities.has("oot.player.custom_body")
@@ -492,9 +492,9 @@ ship.events.on("game.ready", function()
                 chestActive = false
                 apply(false)
             end
-            ship.log.info("forma Goron desfeita")
+            ship.log.info("Goron form undone")
         end
     end)
 
-    ship.log.info("Forma Goron pronta — aperte G")
+    ship.log.info("Goron Form ready — press G")
 end)

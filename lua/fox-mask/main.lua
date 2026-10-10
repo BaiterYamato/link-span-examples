@@ -15,7 +15,7 @@ local wearing = false
 
 ship.events.on("game.ready", function()
     if not ship.capabilities.has("oot.player.attach_model") then
-        ship.log.warn("host sem oot.player.attach_model")
+        ship.log.warn("host lacks oot.player.attach_model")
         return
     end
 
@@ -26,20 +26,20 @@ ship.events.on("game.ready", function()
                 ship.player.set_speed_multiplier(1.0)
             end
             wearing = false
-            ship.log.info("Fox Mask guardada")
+            ship.log.info("Fox Mask put away")
             return
         end
 
         if not ship.oot.player.attach_model("head", MODEL) then
-            ship.log.warn("Fox Mask indisponível — o fox_mask.o2r está na pasta mods?")
+            ship.log.warn("Fox Mask unavailable — is fox_mask.o2r in the mods folder?")
             return
         end
         if ship.capabilities.has("player.speed") then
             ship.player.set_speed_multiplier(SPEED)
         end
         wearing = true
-        ship.log.info("Fox Mask vestida — item novo, modelo próprio, nada substituído")
+        ship.log.info("Fox Mask on — a new item with its own model, nothing replaced")
     end)
 
-    ship.log.info("Fox Mask pronta — aperte M")
+    ship.log.info("Fox Mask ready — press M")
 end)

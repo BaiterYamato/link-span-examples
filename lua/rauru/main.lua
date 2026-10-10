@@ -10,7 +10,7 @@ local function toggle_rauru()
     if rauru and ship.actor.exists(rauru) then
         ship.actor.destroy(rauru)
         rauru = nil
-        ship.log.info("Rauru dispensado")
+        ship.log.info("Rauru dismissed")
         return
     end
 
@@ -20,15 +20,15 @@ local function toggle_rauru()
         rotation = { x = 0, y = 0, z = 0 },
     })
     if not actor then
-        ship.log.warn("Rauru falhou [" .. err.code .. "]: " .. err.message)
+        ship.log.warn("Rauru failed [" .. err.code .. "]: " .. err.message)
         return
     end
     rauru = actor
-    ship.log.info("Rauru, o Sábio da Luz, atravessou os mundos — OOT dentro do MM OK")
+    ship.log.info("Rauru, the Sage of Light, crossed the worlds — OOT inside MM OK")
 end
 
 ship.events.on("game.ready", function()
-    ship.log.info("Rauru pronto — aperte K para invocar/dispensar o Sábio da Luz")
+    ship.log.info("Rauru ready — press K to summon/dismiss the Sage of Light")
 end)
 
 ship.hotkeys.register("rauru", {

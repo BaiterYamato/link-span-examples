@@ -1,5 +1,5 @@
 local ship = require("ship")
-assert(ship.native.has("dash"), "Provider de dash não carregado")
+assert(ship.native.has("dash"), "Dash provider not loaded")
 
 local function invoke(name)
     local result, err = ship.native.call(name, "")

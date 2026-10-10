@@ -11,13 +11,13 @@ ship.events.on("game.ready", function()
         return
     end
     if not ship.capabilities.has("hooks.bridge") then
-        ship.log.warn("host sem hooks.bridge — atualize o Link-Span")
+        ship.log.warn("host lacks hooks.bridge — update Link-Span")
         return
     end
 
     ship.hotkeys.register("no_fall_damage", { default = "N", label = "Toggle fall damage" }, function()
         enabled = not enabled
-        ship.log.info(enabled and "Dano de queda: normal" or "Dano de queda: desligado")
+        ship.log.info(enabled and "Fall damage: normal" or "Fall damage: off")
     end)
 
     ship.events.on("hook.oot.player.fall_damage", function()
@@ -26,5 +26,5 @@ ship.events.on("game.ready", function()
         end
     end)
 
-    ship.log.info("Sem dano de queda pronto — N alterna, aperte quando cair de uma altura grande")
+    ship.log.info("No fall damage ready — N toggles it; press it before falling from a great height")
 end)

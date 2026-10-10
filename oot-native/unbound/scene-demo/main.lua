@@ -5,7 +5,7 @@ local ship = require("ship")
 local TARGET = "linkspan_demo/field_copy/main"
 
 local configured, failure = ship.native.call("configure", TARGET)
-ship.log.info("unbound-scene-demo: " .. (configured or ("falhou: " .. tostring(failure))))
+ship.log.info("unbound-scene-demo: " .. (configured or ("failed: " .. tostring(failure))))
 
 ship.events.on("game.frame", function()
     local event = ship.native.call("update", "")

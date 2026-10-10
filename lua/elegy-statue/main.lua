@@ -10,7 +10,7 @@ local function toggle_statue()
     if statue and ship.actor.exists(statue) then
         ship.actor.destroy(statue)
         statue = nil
-        ship.log.info("estátua removida")
+        ship.log.info("statue removed")
         return
     end
 
@@ -20,15 +20,15 @@ local function toggle_statue()
         rotation = { x = 0, y = 0, z = 0 },
     })
     if not actor then
-        ship.log.warn("estátua falhou [" .. err.code .. "]: " .. err.message)
+        ship.log.warn("statue failed [" .. err.code .. "]: " .. err.message)
         return
     end
     statue = actor
-    ship.log.info("estátua da Elegia (MM) spawnada no OOT — compatibilidade entre jogos OK")
+    ship.log.info("Elegy statue (MM) spawned in OOT — cross-game compatibility OK")
 end
 
 ship.events.on("game.ready", function()
-    ship.log.info("Elegy Statue pronta — aperte K para spawnar/remover a estátua do MM")
+    ship.log.info("Elegy Statue ready — press K to spawn/remove the MM statue")
 end)
 
 ship.hotkeys.register("elegy_statue", {

@@ -16,22 +16,22 @@ end
 
 ship.events.on("game.ready", function()
     if ship.hotkeys == nil then
-        ship.log.warn("host sem suporte a ship.hotkeys — dog spawner desativado")
+        ship.log.warn("host does not support ship.hotkeys — dog spawner disabled")
         return
     end
 
     local spawnDog = resolveSpawnDog()
     if spawnDog == nil then
-        ship.log.warn("nenhuma capability de spawn_dog disponível neste host")
+        ship.log.warn("no spawn_dog capability available on this host")
         return
     end
 
     ship.hotkeys.register("spawn_dog", { default = "F", label = "Spawn Dog" }, function()
         if spawnDog() then
-            ship.log.info("Au au! cachorro spawnado")
+            ship.log.info("Woof! dog spawned")
         else
-            ship.log.warn("não deu pra spawnar aqui — tente estando em jogo numa cena com cachorro")
+            ship.log.warn("could not spawn here — try in game, in a scene with a dog")
         end
     end)
-    ship.log.info("Dog Spawner pronto — aperte F (rebindável)")
+    ship.log.info("Dog Spawner ready — press F (rebindable)")
 end)

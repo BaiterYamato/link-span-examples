@@ -11,7 +11,7 @@ local function spawn_puppet()
     if puppet and ship.actor.exists(puppet) then
         ship.actor.destroy(puppet)
         puppet = nil
-        ship.log.info("puppet removido")
+        ship.log.info("puppet removed")
         return
     end
 
@@ -21,15 +21,15 @@ local function spawn_puppet()
         rotation = { x = 0, y = 0, z = 0 },
     })
     if not actor then
-        ship.log.warn("puppet falhou [" .. err.code .. "]: " .. err.message)
+        ship.log.warn("puppet failed [" .. err.code .. "]: " .. err.message)
         return
     end
     puppet = actor
-    ship.log.info("puppet spawnado — com o Kafei replacer na pasta mods, diga oi pro Kafei")
+    ship.log.info("puppet spawned — with the Kafei replacer in the mods folder, say hi to Kafei")
 end
 
 ship.events.on("game.ready", function()
-    ship.log.info("Kafei Puppet pronto — aperte H para spawnar/remover o puppet")
+    ship.log.info("Kafei Puppet ready — press H to spawn/remove the puppet")
 end)
 
 ship.hotkeys.register("kafei_puppet", {

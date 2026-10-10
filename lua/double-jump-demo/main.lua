@@ -15,7 +15,7 @@ ship.events.on("game.ready", function()
         return
     end
     if not ship.capabilities.has("player.fields") then
-        ship.log.warn("host sem player.fields")
+        ship.log.warn("host lacks player.fields")
         return
     end
 
@@ -29,7 +29,7 @@ ship.events.on("game.ready", function()
         end
         ship.player.set("vel_y", JUMP_IMPULSE)
         usedExtraJump = true
-        ship.log.info("pulo duplo usado")
+        ship.log.info("double jump used")
     end)
 
     ship.events.on("game.frame", function()
@@ -38,5 +38,5 @@ ship.events.on("game.ready", function()
         end
     end)
 
-    ship.log.info("Pulo duplo pronto — pule com o jogo, aperte J no ar")
+    ship.log.info("Double jump ready — jump normally, then press J in the air")
 end)
