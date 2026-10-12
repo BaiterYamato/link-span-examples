@@ -4,7 +4,7 @@
 
 Mod independente para provar os contratos novos do Link-Span no OoT: preflight de assets, item com chave estável, uso
 pelo Link criança, registro V2 com dono e um mod que monta a própria pasta `assets/`. O pacote traz o ícone, a
-textura do nome e o modelo 3D da pá (34 arquivos em `assets/`), então o item próprio do demo aparece como uma pá. Eles
+textura do nome e o modelo 3D da pá (31 arquivos em `assets/`), então o item próprio do demo aparece como uma pá. Eles
 vêm do fork Not Enough Items do skijer ([skijer/Shipwright, branch `Not-Enough-Items`](https://github.com/skijer/Shipwright/tree/Not-Enough-Items),
 commit `c29262b`). O fork não publica licença, então esses arquivos continuam com os autores e o pacote não concede
 licença sobre eles (veja `NOTICE.md`). O demo **não** é uma cópia da pá do Skijer nem pretende ser um mod de gameplay

@@ -23,7 +23,9 @@ function InputFile([string]$Path) {
 # pegar objects/object_nei_shovel_hole_/ (buraco), que este demo não desenha.
 $ShovelModelPrefix = 'objects/object_nei_shovel/'
 $ShovelModelRoot = 'objects/object_nei_shovel/gShovelGiveDL_opaque_dl'   # display list de topo do get-item
-$ShovelModelCount = 32
+# 29 desde o gerador 0.3.7: as três texturas que o fork copiou do Dampé saíram do .o2r, e o modelo aponta para
+# objects/object_tk/ (e uma cópia igual em object_in/) no oot.o2r do jogador.
+$ShovelModelCount = 29
 $ShovelTextures = @('textures/icon_item_custom/gItemIconShovelTex', 'textures/item_name_custom/gShovelNameTex')
 
 function Copy-ShovelAssets([string]$Archive, [string]$Destination) {

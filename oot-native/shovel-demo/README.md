@@ -4,7 +4,7 @@
 
 Standalone mod that proves Link-Span's newer OoT contracts: asset preflight, an item with a stable key, use by child
 Link, V2 registration with an owner and a mod that mounts its own `assets/` folder. The package carries the shovel's
-icon, name texture and 3D model (34 files in `assets/`), so the demo's own item shows a shovel. They come from the Not
+icon, name texture and 3D model (31 files in `assets/`), so the demo's own item shows a shovel. They come from the Not
 Enough Items fork by skijer ([skijer/Shipwright, branch `Not-Enough-Items`](https://github.com/skijer/Shipwright/tree/Not-Enough-Items),
 commit `c29262b`). The fork publishes no license, so those files stay with their authors and the package grants no
 license over them (see `NOTICE.md`). The demo is **not** a copy of Skijer's shovel and is not meant to be a final
