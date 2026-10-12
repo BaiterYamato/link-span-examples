@@ -1,10 +1,13 @@
 id = "linkspan.shovel-demo"
 name = "Link-Span Test Shovel"
-version = "0.1.4"
+version = "0.1.5"
 api = ">=0.5.0 <0.6.0"
 entrypoint = "main.lua"
 games = ["oot"]
 
+# O host confere estes arquivos antes de carregar a DLL, quando o assets/ deste pacote ainda não está montado: aqui só
+# cabem recursos do jogo base. São os do Martelo Megaton, que o item usa se o provider não conseguir montar o ícone e o
+# modelo da pá que o pacote traz em assets/.
 [resources]
 required = [
     "textures/icon_item_static/gItemIconHammerTex",
