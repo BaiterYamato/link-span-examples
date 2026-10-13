@@ -16,7 +16,7 @@ Guias: [mods em Lua](https://github.com/BaiterYamato/link-span/blob/main/docs/wr
 | `lua/` | 23 mods Lua (`manifest.toml` + `main.lua`): hello-world, hotkeys, atores, saves, formas do MM, mini-rando… |
 | `oot-native/` | demos nativos do OoT (DLL de provider): crash, escape hatch, familiar, hooks, item, save, view, world, render CEL e o Shovel (item que usa o serviço do NEI) |
 | `oot-native/unbound/` | demos do Unbound: registro de cena (Hyrule Field copiado), patch de atores de sala e o pacote de atores do formato 0.9 |
-| `oot-native/common/` | `package_assets` (achar `assets/` do pacote), usado pelos demos do Unbound |
+| `oot-native/common/` | `package_assets` (achar `assets/` do pacote), usado pelos demos do Unbound e pelo Shovel |
 | `tools/` | scripts de pacote dos demos nativos (PowerShell 5.1) |
 
 ## Mods Lua
@@ -40,6 +40,9 @@ cmake --build build/crash-demo --config Release
 ```
 
 O Shovel Demo também pede o header público do NEI: `-DLINKSPAN_NEI_INCLUDE=<pasta include/ do pacote NEI>`.
+O pacote dele traz o ícone, o nome e o modelo da pá do fork NEI do skijer, então `tools/package-shovel-demo.ps1` também
+exige `-NeiAssetsCore <nei-assets-core.o2r>` (gerado pelo `tools/build-nei-assets.py` do host) e extrai só as entradas
+da pá; nenhum desses arquivos fica guardado neste repositório.
 Os demos do Unbound compilam juntos: `cmake -S oot-native/unbound ...`.
 
 Os scripts de `tools/` empacotam a DLL compilada. Rode-os **da raiz de um checkout do host**: os padrões de

@@ -15,8 +15,10 @@ if(NOT EXISTS "${LINKSPAN_NEI_INCLUDE}/linkspan/nei/nei_items.h")
     message(FATAL_ERROR "Informe -DLINKSPAN_NEI_INCLUDE=<pasta com linkspan/nei/nei_items.h>")
 endif()
 
-add_library(linkspan_shovel_demo SHARED shovel_demo.cpp)
-target_include_directories(linkspan_shovel_demo PRIVATE ${OOT_NATIVE_INCLUDE_DIRS} "${LINKSPAN_NEI_INCLUDE}")
+# package_assets: acha a pasta assets/ do pacote, ao lado de provider/ (ícone e modelo da pá).
+set(common_dir "${CMAKE_CURRENT_SOURCE_DIR}/../common")
+add_library(linkspan_shovel_demo SHARED shovel_demo.cpp "${common_dir}/package_assets.cpp")
+target_include_directories(linkspan_shovel_demo PRIVATE ${OOT_NATIVE_INCLUDE_DIRS} "${LINKSPAN_NEI_INCLUDE}" "${common_dir}")
 target_compile_definitions(linkspan_shovel_demo PRIVATE ${OOT_NATIVE_COMPILE_DEFINITIONS})
 if(MSVC)
     target_compile_options(linkspan_shovel_demo PRIVATE /utf-8 /Zc:preprocessor)
