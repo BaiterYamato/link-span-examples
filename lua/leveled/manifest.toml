@@ -11,3 +11,6 @@ games = ["oot"]
 required = ["hooks.bridge", "actor.events", "actor.observe", "actor.health", "core.save", "core.modules",
             "core.attributes", "save.events"]
 optional = ["core.menu", "core.storage", "hud.draw", "audio.play", "player.fields", "oot.env"]
+
+[permissions]
+grants = ["world.entities.read", "world.entities.write"]

@@ -1,0 +1,137 @@
+# Leveled 1.1.3.6 (leveled_stat_math.c, Leveled_SetPlayerModifiedStats). Outros mods podem pendurar modificadores
+# nestes dois atributos.
+[[attribute]]
+id = "baiteryamato.leveled.power"
+base = 0
+min = -128
+max = 127
+name = "Power"
+
+[[attribute]]
+id = "baiteryamato.leveled.courage"
+base = 0
+min = -128
+max = 127
+name = "Courage"
+
+[[modifier]]
+id = "baiteryamato.leveled.master_sword"
+target = "oot.sword.master"
+attribute = "baiteryamato.leveled.courage"
+op = "add"
+value = 1
+
+[[modifier]]
+id = "baiteryamato.leveled.biggoron_power"
+target = "oot.sword.biggoron"
+attribute = "baiteryamato.leveled.power"
+op = "add"
+value = 2
+
+[[modifier]]
+id = "baiteryamato.leveled.biggoron_courage"
+target = "oot.sword.biggoron"
+attribute = "baiteryamato.leveled.courage"
+op = "add"
+value = -8
+
+[[modifier]]
+id = "baiteryamato.leveled.goron_tunic_power"
+target = "oot.tunic.goron"
+attribute = "baiteryamato.leveled.power"
+op = "add"
+value = 3
+
+[[modifier]]
+id = "baiteryamato.leveled.goron_tunic_courage"
+target = "oot.tunic.goron"
+attribute = "baiteryamato.leveled.courage"
+op = "add"
+value = -3
+
+[[modifier]]
+id = "baiteryamato.leveled.zora_tunic_power"
+target = "oot.tunic.zora"
+attribute = "baiteryamato.leveled.power"
+op = "add"
+value = -3
+
+[[modifier]]
+id = "baiteryamato.leveled.zora_tunic_courage"
+target = "oot.tunic.zora"
+attribute = "baiteryamato.leveled.courage"
+op = "add"
+value = 3
+
+[[modifier]]
+id = "baiteryamato.leveled.deku_shield"
+target = "oot.shield.deku"
+attribute = "baiteryamato.leveled.courage"
+op = "add"
+value = 1
+
+[[modifier]]
+id = "baiteryamato.leveled.hylian_shield"
+target = "oot.shield.hylian"
+attribute = "baiteryamato.leveled.courage"
+op = "add"
+value = 2
+
+[[modifier]]
+id = "baiteryamato.leveled.mirror_shield_power"
+target = "oot.shield.mirror"
+attribute = "baiteryamato.leveled.power"
+op = "add"
+value = -2
+
+[[modifier]]
+id = "baiteryamato.leveled.mirror_shield_courage"
+target = "oot.shield.mirror"
+attribute = "baiteryamato.leveled.courage"
+op = "add"
+value = 3
+
+[[modifier]]
+id = "baiteryamato.leveled.iron_boots_power"
+target = "oot.boots.iron"
+attribute = "baiteryamato.leveled.power"
+op = "add"
+value = 2
+
+[[modifier]]
+id = "baiteryamato.leveled.iron_boots_courage"
+target = "oot.boots.iron"
+attribute = "baiteryamato.leveled.courage"
+op = "add"
+value = 1
+
+[[modifier]]
+id = "baiteryamato.leveled.hover_boots"
+target = "oot.boots.hover"
+attribute = "baiteryamato.leveled.courage"
+op = "add"
+value = -1
+
+[[modifier]]
+id = "baiteryamato.leveled.goron_bracelet"
+target = "oot.strength.goron_bracelet"
+attribute = "baiteryamato.leveled.power"
+op = "add"
+value = 1
+when = "owned"
+
+[[modifier]]
+id = "baiteryamato.leveled.silver_gauntlets"
+target = "oot.strength.silver_gauntlets"
+attribute = "baiteryamato.leveled.power"
+op = "add"
+value = 2
+when = "owned"
+
+[[modifier]]
+id = "baiteryamato.leveled.golden_gauntlets"
+target = "oot.strength.golden_gauntlets"
+attribute = "baiteryamato.leveled.power"
+op = "add"
+value = 3
+when = "owned"
