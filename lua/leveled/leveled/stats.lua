@@ -1,5 +1,14 @@
 -- Stats e fórmulas do Leveled 1.1.3.6 (leveled_stat_math.c). As conversões para inteiro imitam os casts u8/u16 do C.
+local f32 = require("leveled.f32")
 local stats = {}
+
+-- Constantes com sufixo f no original.
+local attack_linear, attack_curve = f32(0.14), f32(0.0006)
+local enemy_linear, enemy_curve = f32(0.007), f32(0.0002)
+local advantage, disadvantage, player_disadvantage = f32(1.01), f32(0.97), f32(0.96)
+local scaled_base, scaled_add, power_step, power_divisor = f32(1.04), f32(0.07), f32(0.0005), f32(0.33)
+local fixed_base, fixed_add = f32(1.05), f32(0.05)
+local jitter, spread, half_spread = f32(0.2), f32(0.12), f32(0.06)
 
 local function trunc(x)
     if x >= 0 then
@@ -25,18 +34,22 @@ function stats.enemy_courage(level) return 2 + trunc(75 * level / 99) end
 -- GetActorStat_Attack: u16 na entrada e na saída. Acima de 65535 o valor segue; o C dá a volta no cast.
 function stats.attack(attack, power)
     local p = power - 2
-    return trunc(trunc(attack) * (1 + p * (0.14 + p * 0.0006)))
+    local factor = f32(attack_linear + f32(p * attack_curve))
+    factor = f32(1 + f32(p * factor))
+    return trunc(f32(f32(trunc(attack)) * factor))
 end
 
 -- GetActorStat_EnemyAttack: u16 na entrada, float na saída.
 function stats.enemy_attack(attack, power)
     local p = power - 2
-    return trunc(attack) * (1 + p * (0.007 + p * 0.0002))
+    local factor = f32(enemy_linear + f32(p * enemy_curve))
+    factor = f32(1 + f32(p * factor))
+    return f32(f32(trunc(attack)) * factor)
 end
 
 -- GetActorStat_EnemyMaxHealth. opts.multiplier (padrão 9), opts.hp_percent (padrão 1.0).
 function stats.enemy_max_health(base, level, opts)
-    local value = stats.attack(base * opts.multiplier, stats.player_power(level)) * opts.hp_percent
+    local value = f32(f32(stats.attack(base * opts.multiplier, stats.player_power(level))) * f32(opts.hp_percent))
     return trunc(clamp(value, 1, 0xFFFF))
 end
 
@@ -47,14 +60,14 @@ end
 
 -- Leveled_DamageFormula: alvo que não é o Link.
 function stats.formula(attack, power, courage)
-    local damage = stats.attack(attack, power)
+    local damage = f32(stats.attack(f32(attack), power))
     if power >= courage then
         for _ = 1, power - courage do
-            damage = damage * 1.01
+            damage = f32(damage * advantage)
         end
     else
         for _ = 1, courage - power do
-            damage = damage * 0.97
+            damage = f32(damage * disadvantage)
         end
     end
     return damage
@@ -62,27 +75,30 @@ end
 
 -- Leveled_DamageFormulaOnPlayer. scales = opção "Enemy Level Affects Base Attack".
 function stats.formula_on_player(attack, power, courage, scales)
-    local damage = attack
+    local damage = f32(attack)
     if scales then
         damage = stats.enemy_attack(attack, power)
         if power >= courage then
             for i = 0, power - courage - 1 do
-                local add = math.max((0.07 - power * 0.0005) - i / (100.0 - power * 0.33), 0)
-                damage = damage * (1.04 + add)
+                local numerator = f32(scaled_add - f32(power * power_step))
+                local denominator = f32(100 - f32(power * power_divisor))
+                local add = math.max(f32(numerator - f32(i / denominator)), 0)
+                damage = f32(damage * f32(scaled_base + add))
             end
         else
             for _ = 1, courage - power do
-                damage = damage * 0.96
+                damage = f32(damage * player_disadvantage)
             end
         end
     else
         if power >= courage then
             for i = 0, power - courage - 1 do
-                damage = damage * (1.05 + math.max(0.05 - i / 100.0, 0))
+                local add = math.max(f32(fixed_add - f32(i / 100)), 0)
+                damage = f32(damage * f32(fixed_base + add))
             end
         else
             for _ = 1, courage - power do
-                damage = damage * 0.96
+                damage = f32(damage * player_disadvantage)
             end
         end
     end
@@ -91,6 +107,7 @@ end
 
 -- Leveled_DamageModify. rng(n) devolve um float em [0, n).
 function stats.modify(target_is_player, attack, power, courage, scales, rng)
+    attack = f32(attack)
     power = clamp(power, 0, 255)
     courage = clamp(courage, 0, 255)
     local damage
@@ -100,15 +117,16 @@ function stats.modify(target_is_player, attack, power, courage, scales, rng)
         damage = stats.formula(attack, power, courage)
     end
     if damage >= 1.25 then
-        damage = damage + rng(1) - 0.2
+        damage = f32(damage + f32(f32(rng(1)) - jitter))
     end
     if damage >= 6 then
-        damage = damage + rng(damage * 0.12) - damage * 0.06
+        local random = f32(rng(f32(damage * spread)))
+        damage = f32(damage + f32(random - f32(damage * half_spread)))
     end
     if damage > 9999 then
         damage = 9999
     end
-    damage = trunc(damage + 0.5)
+    damage = trunc(f32(damage + 0.5))
     local minimum = attack > 0 and 1 or 0
     if damage < minimum then
         damage = minimum
@@ -130,9 +148,9 @@ end
 function stats.token_xp(tokens, token_rate)
     local xp = 5
     for i = 0, tokens - 1 do
-        xp = trunc(xp + 5 + 5 * i / 10.0)
+        xp = trunc(f32(xp + f32(5 + f32(5 * i / 10))))
     end
-    return trunc(xp * token_rate)
+    return trunc(f32(f32(xp) * f32(token_rate)))
 end
 
 return stats

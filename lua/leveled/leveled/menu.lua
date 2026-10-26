@@ -17,8 +17,8 @@ function menu.register(options)
         else
             widget.type = def.integer and "slider_int" or "slider_number"
             widget.min, widget.max = def.min, def.max
-            widget.step = def.integer and 1 or 0.1
-            widget.format = def.integer and "%d" or "%.1f"
+            widget.step = def.integer and 1 or 0.01
+            widget.format = def.integer and "%d" or "%.2fx"
         end
         widgets[#widgets + 1] = widget
     end

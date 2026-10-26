@@ -46,7 +46,95 @@ local function with_services(services, body)
     if not ok then error(err) end
 end
 
+local function with_member(object, name, value, body)
+    local old = object[name]
+    object[name] = value
+    local ok, err = pcall(body)
+    object[name] = old
+    if not ok then error(err) end
+end
+
 describe("fluxo leveled", function()
+    it("D1: atacante não jogador soma 1 Power antes da fórmula", function()
+        loaded(12)
+        options.set("equipment", false)
+        local result
+        local has = ship.capabilities.has
+        with_services({
+            capabilities = { has = function(cap) return cap ~= "oot.env" and has(cap) end },
+            hooks = { result = function(value) result = value end },
+        }, function()
+            with_member(math, "random", function() return 0.5 end, function()
+                for _, category in ipairs({ 5, 9 }) do
+                    local attacker = { actor_id = 0xFFF, category = category }
+                    mock.events.emit("hook.oot.actor.damage", {
+                        attacker_is_player = false, attacker = attacker,
+                        target_category = 2, damage = 8,
+                    })
+                    assert.equals(9, result)
+                    mock.events.emit("hook.oot.actor.damage", {
+                        attacker_is_player = false, attacker = attacker, target_category = 5,
+                        target_extended = true, target = { actor_id = 0xFFF, category = 5 }, damage = 8,
+                    })
+                    assert.equals(94, result) -- Power 4, Courage 2, ataque 8 * 9.
+                end
+                no_errors()
+            end)
+        end)
+    end)
+
+    local heart_slot = 20
+    local function check_hearts(base, enabled, expected, reject)
+        local fields = { health_capacity = base, health = base }
+        local has = ship.capabilities.has
+        local notice
+        with_services({
+            capabilities = { has = function(cap) return cap == "player.fields" or has(cap) end },
+            player = {
+                get = function(field) return fields[field] end,
+                set = function(field, value)
+                    if reject and value ~= base then return nil, { code = "invalid_state" } end
+                    fields[field] = value
+                    return true
+                end,
+            },
+        }, function()
+            with_member(require("leveled.hud"), "level_up", function(_, diff) notice = diff end, function()
+                loaded(heart_slot, curve.xp_at_level(7) - 1)
+                heart_slot = heart_slot + 1
+                options.set("bonus_hearts", enabled)
+                defeat(keese())
+                assert.equals(expected, notice.hearts)
+                assert.equals(base + expected * 16, fields.health_capacity)
+                no_errors()
+            end)
+        end)
+    end
+
+    it("D3: aviso respeita bônus desligado no nível 6 para 7", function()
+        check_hearts(48, false, 0)
+    end)
+    it("D3: aviso usa o ganho aplicado e respeita 20 corações", function()
+        check_hearts(48, true, 1)
+        check_hearts(320, true, 0)
+        check_hearts(312, true, 0.5)
+    end)
+    it("D3: aviso não promete vida quando o setter falha", function()
+        check_hearts(48, true, 0, true)
+    end)
+    it("D8: host rejeita vida inicial zero e o init preserva a guarda", function()
+        loaded(14)
+        local actor = { actor_id = 0xFFF, category = 5, params = 0 }
+        actor.handle = mock.actors.observe({ actor_id = actor.actor_id, category = 5, params = 0, health = 0 })
+        local ok, err = ship.actor.set_max_health(actor.handle, 1)
+        assert.is_nil(ok)
+        assert.equals("invalid_state", err.code)
+        with_member(ship.actor, "set_max_health", function() error("init não deve estender vida zero") end,
+            function() mock.events.emit("actor.init", { actor = actor }) end)
+        assert.equals(0, ship.actor.get(actor.handle, "max_health"))
+        assert.equals(0, mock.actors.get(actor.handle).extended_max)
+        no_errors()
+    end)
     it("estende a vida e concede XP uma vez por handle", function()
         loaded(0)
         local actor = keese()
@@ -245,6 +333,36 @@ describe("fluxo leveled", function()
 end)
 
 describe("opções e menu", function()
+    it("D6: taxas e fatores mostram duas casas e persistem passo 0,01", function()
+        mock.reset()
+        options.load()
+        local page
+        with_services({ menu = { register = function(value) page = value; return true end } }, function()
+            require("leveled.menu").register(options)
+        end)
+        local checked = 0
+        for _, widget in ipairs(page.widgets) do
+            if widget.type == "slider_number" then
+                assert.equals(0.01, widget.step)
+                assert.equals("%.2fx", widget.format)
+                assert.equals("1.25x", string.format(widget.format, 1.25))
+                widget.on_change(1.25)
+                assert.equals(1.25, options[widget.storage_key])
+                assert.equals(1.25, ship.storage.get(widget.storage_key))
+                widget.on_change(1.26)
+                assert.equals(1.26, ship.storage.get(widget.storage_key))
+                checked = checked + 1
+            elseif widget.type == "slider_int" then
+                assert.equals(1, widget.step)
+                assert.equals("%d", widget.format)
+            end
+        end
+        assert.equals(4, checked)
+        options.load()
+        assert.equals(1.26, options.xp_rate)
+        mock.reset()
+        options.load()
+    end)
     it("corta faixas, rejeita tipos e usa padrões sem storage", function()
         mock.reset()
         ship.storage.set("xp_rate", 20)

@@ -1,5 +1,6 @@
 -- Curva de XP do Leveled 1.1.3.6 (leveled_stat_math.c: sExpTable, GetActorStat_NextLevelExp e
 -- Player_GainExperience).
+local f32 = require("leveled.f32")
 local curve = {}
 
 curve.MAX_LEVEL = 99
@@ -49,7 +50,7 @@ function curve.gain(xp, amount, rate)
     if level >= curve.MAX_LEVEL then
         return xp, level, 0
     end
-    local scaled = math.floor(amount * (rate or 1.0) + 0.5)
+    local scaled = math.floor(f32(f32(amount) * f32(rate or 1.0)) + 0.5)
     if scaled < 0 then
         scaled = 0
     elseif scaled > 0xFFFF then

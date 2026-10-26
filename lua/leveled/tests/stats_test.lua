@@ -4,6 +4,37 @@ local function near(expected, actual) assert.is_true(math.abs(expected - actual)
 local function no_rng() return 0 end
 
 describe("stats", function()
+    it("D4: taxa de token também multiplica em f32 antes de truncar", function()
+        assert.equals(483, stats.token_xp(21, 2.3))
+    end)
+    it("D5: trunca ataque e vida depois das operações f32 do C", function()
+        assert.equals(3608, stats.attack(225, 82))
+        for _, vector in ipairs({
+            { 1, 70, 9, 63 }, { 1, 71, 9, 63 }, { 2, 35, 9, 63 },
+            { 3, 94, 32, 938 }, { 3, 95, 32, 938 }, { 5, 10, 9, 63 },
+            { 5, 53, 9, 238 }, { 5, 54, 9, 238 }, { 5, 57, 32, 910 },
+            { 5, 58, 32, 910 }, { 6, 85, 9, 469 }, { 7, 39, 9, 245 },
+        }) do
+            assert.equals(vector[4], stats.enemy_max_health(vector[1], vector[2],
+                { multiplier = vector[3], hp_percent = 0.7 }))
+        end
+    end)
+    it("D5: dano f32 com sorteios iguais ao C nos dois alvos", function()
+        for _, vector in ipairs({
+            { false, 18, 78, 25, 0.5, 459 }, { false, 36, 86, 30, 0, 1002 },
+            { false, 72, 76, 50, 0.5, 1365 }, { false, 72, 78, 20, 0, 1819 },
+            { false, 72, 95, 0, 0.5, 3559 }, { false, 144, 83, 15, 0.5, 4609 },
+            { false, 144, 85, 30, 0.5, 4169 }, { true, 9, 64, 0, 0.5, 262 },
+            { true, 9, 88, 5, 0, 700 }, { true, 36, 81, 0, 0.5, 2529 },
+            { true, 36, 85, 0, 0.5, 3106 }, { true, 36, 92, 55, 0, 484 },
+        }) do
+            assert.equals(vector[6], stats.modify(vector[1], vector[2], vector[3], vector[4], true,
+                function(n) return n * vector[5] end))
+        end
+    end)
+    it("D8: fórmula mantém o mínimo 1 mesmo com base zero", function()
+        assert.equals(1, stats.enemy_max_health(0, 1, defaults))
+    end)
     it("stats por nível", function()
         assert.equals(2, stats.player_power(1)); assert.equals(77, stats.player_power(99))
         assert.equals(3, stats.player_courage(1)); assert.equals(87, stats.player_courage(99))

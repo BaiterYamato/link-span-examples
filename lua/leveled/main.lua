@@ -60,11 +60,11 @@ end
 
 local function apply_hearts()
     if state.slot == nil or not ship.save.available() or restore_next_frame then
-        return
+        return 0
     end
     local current = integer(player("health_capacity"))
     if current == nil then
-        return
+        return 0
     end
     state.base_capacity = state.base_capacity or current
     if state.written_capacity and current ~= state.written_capacity then
@@ -77,7 +77,9 @@ local function apply_hearts()
     end
     if ship.player.set("health_capacity", target) then
         state.written_capacity = target
+        return math.max(0, target - current)
     end
+    return 0
 end
 
 ship.events.on("save.loaded", function(payload)
@@ -149,6 +151,7 @@ ship.events.on("actor.init", function(payload)
     local info = resolve(actor)
     enemies[actor_key] = info
     local base = ship.actor.get(actor.handle, "max_health")
+    -- O host rejeita atores sem vida inicial com invalid_state.
     if type(base) == "number" and base > 0 then
         local maximum = stats.enemy_max_health(base, info.level, options)
         ship.actor.set_max_health(actor.handle, maximum)
@@ -177,7 +180,7 @@ ship.events.on("hook.oot.actor.damage", function(payload)
     if payload.attacker_is_player then
         power = stats.player_power(state.level) + equipment("power")
     elseif payload.attacker then
-        power = stats.enemy_power(info_for(payload.attacker).level)
+        power = stats.enemy_power(info_for(payload.attacker).level) + 1
     else
         return
     end
@@ -224,12 +227,12 @@ local function gain(amount, rate)
     ship.save.set("xp", new_xp)
     hud.push_xp(new_xp - old_xp)
     if raised > 0 then
+        local hearts = apply_hearts() / 16
         local diff = {
             power = stats.player_power(new_level) - stats.player_power(old_level),
             courage = stats.player_courage(new_level) - stats.player_courage(old_level),
-            hearts = stats.bonus_hearts(new_level) - stats.bonus_hearts(old_level),
+            hearts = math.tointeger(hearts) or hearts,
         }
-        apply_hearts()
         if options.level_up_sound and ship.capabilities.has("audio.play") then
             ship.audio.play_fanfare(0x22)
         end
