@@ -1,0 +1,13 @@
+id = "baiteryamato.leveled"
+name = "Leveled"
+version = "0.1.0"
+api = ">=0.5 <0.6"
+entrypoint = "main.lua"
+description = "RPG leveling for Ocarina of Time: XP, levels 1-99, Power and Courage, scaled enemies and damage numbers. Port of Arrenton's Leveled 1.1.3.6 to Link-Span, in pure Lua."
+authors = ["Arrenton (Leveled)", "BaiterYamato (Link-Span port)"]
+games = ["oot"]
+
+[capabilities]
+required = ["hooks.bridge", "actor.events", "actor.observe", "actor.health", "core.save", "core.modules",
+            "core.attributes", "save.events"]
+optional = ["core.menu", "core.storage", "hud.draw", "audio.play", "player.fields", "oot.env"]
