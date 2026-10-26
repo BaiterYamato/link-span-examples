@@ -8,7 +8,9 @@ local menu = require("leveled.menu")
 
 local PLAYER, ENEMY, BOSS = 2, 5, 9
 local TOKEN = 0x71
-local state = { xp = 0, level = 1 }
+-- slot: arquivo com save.loaded já entregue. O save.loaded chega no primeiro frame com o Link; antes dele, o
+-- save.saving da carga (check tracker do SoH) e o game.frame ainda veriam o estado do arquivo anterior.
+local state = { xp = 0, level = 1, slot = nil }
 local enemies, defeated = {}, {}
 local restore_next_frame
 local frames = 0
@@ -25,6 +27,11 @@ local function player(field)
     if ship.capabilities.has("player.fields") then
         return ship.player.get(field)
     end
+end
+
+-- O ship.player.get devolve float; o save guarda inteiro.
+local function integer(value)
+    return type(value) == "number" and math.tointeger(value) or nil
 end
 
 local function debug_log(message)
@@ -52,11 +59,11 @@ local function info_for(actor)
 end
 
 local function apply_hearts()
-    if not ship.save.available() or restore_next_frame then
+    if state.slot == nil or not ship.save.available() or restore_next_frame then
         return
     end
-    local current = player("health_capacity")
-    if type(current) ~= "number" then
+    local current = integer(player("health_capacity"))
+    if current == nil then
         return
     end
     state.base_capacity = state.base_capacity or current
@@ -73,24 +80,26 @@ local function apply_hearts()
     end
 end
 
-ship.events.on("save.loaded", function()
+ship.events.on("save.loaded", function(payload)
     -- Nenhum handle, bônus escrito ou aviso pertence ao próximo arquivo.
     enemies, defeated = {}, {}
     restore_next_frame = nil
     state.xp, state.base_capacity, state.written_capacity = 0, nil, nil
+    state.slot = payload and payload.slot or -1
     frames = 0
     hud.reset()
     if ship.save.available() then
         state.xp = ship.save.get("xp", 0)
-        state.base_capacity = ship.save.get("base_capacity") or player("health_capacity")
+        state.base_capacity = integer(ship.save.get("base_capacity")) or integer(player("health_capacity"))
         ship.save.set("schema", 1)
     end
     state.level = curve.level_for_xp(state.xp)
     apply_hearts()
 end)
 
-ship.events.on("save.saving", function()
-    if not ship.save.available() or restore_next_frame then
+ship.events.on("save.saving", function(payload)
+    if state.slot == nil or (payload and payload.slot ~= state.slot) or not ship.save.available() or
+        restore_next_frame then
         return
     end
     apply_hearts()
@@ -106,7 +115,11 @@ end)
 ship.events.on("game.frame", function()
     if not ship.save.available() then
         restore_next_frame = nil
+        state.slot = nil
         hud.reset()
+        return
+    end
+    if state.slot == nil then
         return
     end
     if restore_next_frame then
@@ -202,7 +215,7 @@ ship.events.on("hook.oot.player.health_change", function(payload)
 end)
 
 local function gain(amount, rate)
-    if not ship.save.available() then
+    if state.slot == nil or not ship.save.available() then
         return
     end
     local old_xp, old_level = state.xp, state.level

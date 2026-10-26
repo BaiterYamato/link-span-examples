@@ -158,6 +158,35 @@ describe("fluxo leveled", function()
         end)
     end)
 
+    it("não grava o estado do arquivo anterior antes do save.loaded do novo", function()
+        -- O ship.player.get do host devolve float.
+        local fields = { health_capacity = 48.0, health = 48.0 }
+        local has = ship.capabilities.has
+        with_services({
+            capabilities = { has = function(cap) return cap == "player.fields" or has(cap) end },
+            player = {
+                get = function(field) return fields[field] end,
+                set = function(field, value) fields[field] = value; return true end,
+            },
+        }, function()
+            loaded(10, curve.xp_at_level(20))
+            assert.is_true(fields.health_capacity > 48)
+            assert.equals("integer", math.type(mock.save.dump().base_capacity))
+            -- Troca de arquivo: o SoH grava na carga, antes do save.loaded do arquivo novo.
+            mock.save.unload()
+            mock.timer.advance(1)
+            mock.save.load(11)
+            fields.health_capacity, fields.health = 64.0, 64.0
+            mock.events.emit("save.saving", { slot = 11 })
+            mock.timer.advance(31)
+            assert.is_nil(mock.save.dump().base_capacity)
+            assert.equals(64, fields.health_capacity)
+            mock.events.emit("save.loaded", { slot = 11 })
+            assert.equals(64, mock.save.dump().base_capacity)
+            no_errors()
+        end)
+    end)
+
     it("transforma dano só nos alvos cobertos e respeita dano zero no inimigo", function()
         loaded(8)
         local actor = keese()
