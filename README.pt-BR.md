@@ -13,7 +13,7 @@ Guias: [mods em Lua](https://github.com/BaiterYamato/link-span/blob/main/docs/wr
 
 | Pasta | O que tem |
 |---|---|
-| `lua/` | 23 mods Lua (`manifest.toml` + `main.lua`): hello-world, hotkeys, atores, saves, formas do MM, mini-rando… |
+| `lua/` | mods Lua (`manifest.toml` + `main.lua`): hello-world, hotkeys, atores, saves, mini-rando… |
 | `oot-native/` | demos nativos do OoT (DLL de provider): crash, escape hatch, familiar, hooks, item, save, view, world, render CEL e o Shovel (item que usa o serviço do NEI) |
 | `oot-native/unbound/` | demos do Unbound: registro de cena (Hyrule Field copiado), patch de atores de sala e o pacote de atores do formato 0.9 |
 | `oot-native/common/` | `package_assets` (achar `assets/` do pacote), usado pelos demos do Unbound e pelo Shovel |
@@ -28,6 +28,20 @@ alguns trazem (`tests/`), use o `shipmod.py` do link-span:
 python <link-span>/tools/shipmod.py validate lua/hello-world
 python <link-span>/tools/shipmod.py test lua/frame-counter
 ```
+
+Os exemplos independentes `lua/goron-form`, `lua/kafei-puppet` e `lua/elegy-statue` foram aposentados conforme a
+RFC 0029 §6: seus bindings do host OoT e nomes de atores embutidos foram retirados. O conteúdo pertence às cascas
+de mod nativo no host:
+
+| Exemplo aposentado | Casca no repositório do host OoT |
+|---|---|
+| `lua/goron-form` | `soh/native-sdk/mm-forms` (`linkspan.mm.forms`); inclui a spec Goron e o controle pela tecla G |
+| `lua/kafei-puppet`, `lua/elegy-statue` | `soh/native-sdk/puppets` (`linkspan.oot.puppets`); fornece os tipos de ator, com os controles Lua ainda pendentes |
+
+As cascas ficam fora do RC e sem prova em jogo. MM Forms e a estátua da Elegia exigem MM Base
+(`soh/native-sdk/mm-base`) e assets do MM. Instalar Bonecos não restaura os nomes lógicos antigos em
+`ship.actor.spawn`; o Lua do próprio pacote pode pedir os IDs nativos via `ship.native.call("actor_ids", "")`.
+Consulte o README de cada casca no checkout do host para seus requisitos e limites atuais.
 
 ## Demos nativos (OoT)
 

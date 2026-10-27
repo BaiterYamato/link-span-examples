@@ -2,43 +2,37 @@
 
 # dog-spawner
 
-Mod de exemplo que funciona em **ambos os jogos suportados**: aperte **F**
-(rebindável) e um cachorro aparece na sua frente.
+Aperte **F** (reconfigurável) para criar um cachorro na frente do jogador.
 
-- Em **Ocarina of Time (Ship of Harkinian)**: spawna o cachorro do `Hyrule Market`
-  (`En_Dog`) via `ship.oot.spawn_dog()`.
-- Em **Majora's Mask (2Ship2Harkinian)**: spawna o cachorro de `Clock Town`
-  (`En_Dg`) via `ship.mm.spawn_dog()`.
+- **OoT (Ship of Harkinian):** usa `ship.actor.spawn("oot.en_dog", ...)`, como
+  [actor-spawn](../actor-spawn/main.lua). Consulta `ship.actor.exists` e destrói o cão anterior do mod
+  antes de criar outro. Um handle expirado (por exemplo após trocar de cena) é descartado.
+- **MM (2Ship2Harkinian):** mantém `ship.mm.spawn_dog()` e a capability `mm.spawn_dog`.
 
-Demonstra o padrão de **mod multi-jogo com branching por capability**: a mesma
-hotkey é registrada nos dois hosts, mas a função de spawn é resolvida em runtime
-conforme a capability anunciada (`oot.spawn_dog` ou `mm.spawn_dog`).
-
-```lua
-local function resolveSpawnDog()
-    if ship.capabilities.has("oot.spawn_dog") and ship.oot and ship.oot.spawn_dog then
-        return ship.oot.spawn_dog
-    end
-    if ship.capabilities.has("mm.spawn_dog") and ship.mm and ship.mm.spawn_dog then
-        return ship.mm.spawn_dog
-    end
-    return nil
-end
-```
+O [entrypoint Lua](main.lua) seleciona o jogo ativo com `ship.game.id()` e verifica suas capabilities antes de
+registrar a tecla. O caminho genérico do OoT exige `actor.spawn`, `actor.destroy` e `actor.exists`; o caminho MM
+só exige `mm.spawn_dog`. São opcionais no manifesto para o mesmo mod carregar nos dois hosts.
 
 ## Instalar
 
-Copie esta pasta (ou empacote como `dog-spawner.shipmod`) para a pasta `mods/`
-do 2Ship ou do SoH e abra o jogo. Em jogo, aperte **F**.
+Copie esta pasta (ou empacote como `dog-spawner.shipmod`) para `mods/` do jogo e abra o jogo.
+Aperte **F** em jogo.
 
 ## Notas
 
-- Declara `games = ["oot", "mm"]` e lista `oot.spawn_dog` / `mm.spawn_dog` como
-  capabilities **opcionais** — carrega em ambos os hosts, mas só spawna quando o
-  host oferece a capability correspondente.
-- **OoT**: o cachorro (`ACTOR_EN_DOG`) é o NPC da side-quest da Dog Lady. Spawnar
-  fora do `Hyrule Market` pode fazer o ator ficar parado ou se remover, pois o
-  `En_Dog` valida cena/params no init. Use em `SCENE_MARKET_DAY`/`SCENE_MARKET_NIGHT`
-  para resultado confiável.
-- **MM**: o objeto `object_dog` precisa estar carregado na cena (Clock Town e áreas
-  com cachorros) para o ator renderizar.
+- O manifesto concede `world.entities.create`, `world.entities.destroy` e `world.entities.read` para a API
+  genérica de atores e limita os atores próprios a um. O helper MM conserva o comportamento original.
+- **OoT:** o host interpreta a posição `(0, 0, 0)` como “na frente do jogador”. O spawn retorna um handle opaco
+  ou um erro de operação, que é registrado no log. O objeto do cão precisa estar carregado na cena. Tente
+  Hyrule Market (`SCENE_MARKET_DAY` / `SCENE_MARKET_NIGHT`); fora de cenas adequadas, `En_Dog` pode ficar parado
+  ou se remover.
+- **MM:** `object_dog` precisa estar carregado na cena (Clock Town e áreas com cachorros) para renderizar.
+
+## Testar sem o jogo
+
+```powershell
+python <link-span>/tools/shipmod.py test lua/dog-spawner --game oot
+python <link-span>/tools/shipmod.py test lua/dog-spawner --game mm
+```
+
+Os testes cobrem substituição do handle próprio, handles expirados, falhas de operação e a rota MM preservada.

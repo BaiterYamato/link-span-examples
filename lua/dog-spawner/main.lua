@@ -1,14 +1,39 @@
 local ship = require("ship")
 
--- Resolve a função de spawn do jogo ativo, se o host oferecer a capability.
--- OOT expõe ship.oot.spawn_dog (En_Dog, Hyrule Market); MM expõe
--- ship.mm.spawn_dog (En_Dg, Clock Town). Se nenhuma das duas existir, o mod
--- registra a hotkey mas avisa que não há suporte neste host.
-local function resolveSpawnDog()
-    if ship.capabilities.has("oot.spawn_dog") and ship.oot and ship.oot.spawn_dog then
-        return ship.oot.spawn_dog
+local active_actor = nil
+
+-- OoT usa handles genéricos e conserva no máximo um cão deste mod.
+local function spawnOotDog()
+    if active_actor then
+        local alive, err = ship.actor.exists(active_actor)
+        if alive == nil then
+            return nil, err
+        end
+        if alive then
+            local destroyed, destroy_err = ship.actor.destroy(active_actor)
+            if not destroyed then
+                return nil, destroy_err
+            end
+        end
+        active_actor = nil
     end
-    if ship.capabilities.has("mm.spawn_dog") and ship.mm and ship.mm.spawn_dog then
+
+    local actor, err = ship.actor.spawn("oot.en_dog", {
+        -- No host OoT, a origem pede a posição à frente do jogador.
+        position = { x = 0, y = 0, z = 0 },
+        rotation = { x = 0, y = 0, z = 0 },
+    })
+    active_actor = actor
+    return actor, err
+end
+
+-- Resolve o caminho do jogo ativo, sem depender de conteúdo MM no host OoT.
+local function resolveSpawnDog()
+    if ship.game.id() == "oot" and ship.capabilities.has("actor.spawn")
+        and ship.capabilities.has("actor.destroy") and ship.capabilities.has("actor.exists") then
+        return spawnOotDog
+    end
+    if ship.game.id() == "mm" and ship.capabilities.has("mm.spawn_dog") and ship.mm and ship.mm.spawn_dog then
         return ship.mm.spawn_dog
     end
     return nil
@@ -16,22 +41,25 @@ end
 
 ship.events.on("game.ready", function()
     if ship.hotkeys == nil then
-        ship.log.warn("host does not support ship.hotkeys — dog spawner disabled")
+        ship.log.warn("host sem ship.hotkeys — Dog Spawner desativado")
         return
     end
 
     local spawnDog = resolveSpawnDog()
     if spawnDog == nil then
-        ship.log.warn("no spawn_dog capability available on this host")
+        ship.log.warn("host sem as capabilities necessárias para criar um cachorro")
         return
     end
 
-    ship.hotkeys.register("spawn_dog", { default = "F", label = "Spawn Dog" }, function()
-        if spawnDog() then
-            ship.log.info("Woof! dog spawned")
+    ship.hotkeys.register("spawn_dog", { default = "F", label = "Criar cachorro" }, function()
+        local dog, err = spawnDog()
+        if dog then
+            ship.log.info("Au! Cachorro criado")
+        elseif err then
+            ship.log.warn("Falha ao criar cachorro [" .. err.code .. "]: " .. err.message)
         else
-            ship.log.warn("could not spawn here — try in game, in a scene with a dog")
+            ship.log.warn("Não foi possível criar aqui — tente em jogo, numa cena com cachorro")
         end
     end)
-    ship.log.info("Dog Spawner ready — press F (rebindable)")
+    ship.log.info("Dog Spawner pronto — aperte F (reconfigurável)")
 end)

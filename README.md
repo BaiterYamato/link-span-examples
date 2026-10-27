@@ -13,7 +13,7 @@ Guides: [writing Lua mods](https://github.com/BaiterYamato/link-span/blob/main/d
 
 | Folder | Contents |
 |---|---|
-| `lua/` | 23 Lua mods (`manifest.toml` + `main.lua`): hello-world, hotkeys, actors, saves, MM forms, mini-rando… |
+| `lua/` | Lua mods (`manifest.toml` + `main.lua`): hello-world, hotkeys, actors, saves, mini-rando… |
 | `oot-native/` | native OoT demos (provider DLLs): crash, escape hatch, familiar, hooks, item, save, view, world, CEL rendering and Shovel (an item that uses the NEI service) |
 | `oot-native/unbound/` | Unbound demos: scene registration (a copy of Hyrule Field), room actor patch and the format 0.9 actor package |
 | `oot-native/common/` | `package_assets` (finds the package `assets/` folder), used by the Unbound demos and the Shovel Demo |
@@ -28,6 +28,20 @@ the tests some of them ship (`tests/`), use `shipmod.py` from link-span:
 python <link-span>/tools/shipmod.py validate lua/hello-world
 python <link-span>/tools/shipmod.py test lua/frame-counter
 ```
+
+The standalone `lua/goron-form`, `lua/kafei-puppet` and `lua/elegy-statue` examples have been retired following
+RFC 0029 §6: their OoT host bindings and built-in actor names were removed. Their content belongs to the host's
+native mod shells:
+
+| Retired example | Shell in the OoT host repository |
+|---|---|
+| `lua/goron-form` | `soh/native-sdk/mm-forms` (`linkspan.mm.forms`); includes the Goron spec and G toggle |
+| `lua/kafei-puppet`, `lua/elegy-statue` | `soh/native-sdk/puppets` (`linkspan.oot.puppets`); provides the actor types, with Lua controls still pending |
+
+These shells are outside the RC and have no in-game validation. MM Forms and the Elegy statue require MM Base
+(`soh/native-sdk/mm-base`) and MM assets. Installing Puppets does not restore the old logical names in
+`ship.actor.spawn`; its own Lua entrypoint can request native IDs via `ship.native.call("actor_ids", "")`.
+See each shell's README in the host checkout for its current requirements and limitations.
 
 ## Native demos (OoT)
 
