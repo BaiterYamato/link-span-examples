@@ -8,4 +8,10 @@ authors = ["BaiterYamato"]
 games = ["oot", "mm"]
 
 [capabilities]
-optional = ["oot.spawn_dog", "mm.spawn_dog"]
+optional = ["actor.spawn", "actor.destroy", "actor.exists", "mm.spawn_dog"]
+
+[permissions]
+grants = ["world.entities.create", "world.entities.destroy", "world.entities.read"]
+
+[limits]
+actors = 1

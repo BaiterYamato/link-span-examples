@@ -1,7 +1,6 @@
 local ship = require("ship")
 
--- Antes este mod dependia de um verbo dedicado no host (set_bunny_hood).
--- Agora ele é composto de duas primitivas genéricas — a mesma dupla serve
+-- Composto de duas primitivas genéricas — a mesma dupla serve
 -- para qualquer máscara com qualquer efeito, sem tocar em C++:
 --
 --   ship.oot.player.set_mask(nome)          -- keaton, skull, spooky,
@@ -9,7 +8,7 @@ local ship = require("ship")
 --                                              gerudo, truth, none
 --   ship.player.set_speed_multiplier(fator) -- 0.1 a 5.0; 1.0 restaura
 --
--- Se o host for antigo (alpha.3) e só tiver o verbo dedicado, caímos nele.
+-- A máscara aumenta a velocidade; não acrescenta o pulo extra do MM.
 
 local MASK = "bunny_hood"
 local SPEED = 1.5
@@ -23,15 +22,11 @@ local function set(enabled)
         end
         return ship.player.set_speed_multiplier(enabled and SPEED or 1.0)
     end
-    if ship.capabilities.has("oot.player.bunny_hood") then
-        return ship.oot.player.set_bunny_hood(enabled)
-    end
     return false
 end
 
 ship.events.on("game.ready", function()
-    local ok = ship.capabilities.has("oot.player.bunny_hood")
-        or (ship.capabilities.has("oot.player.mask") and ship.capabilities.has("player.speed"))
+    local ok = ship.capabilities.has("oot.player.mask") and ship.capabilities.has("player.speed")
     if not ok then
         ship.log.warn("host lacks the mask/speed capabilities")
         return
