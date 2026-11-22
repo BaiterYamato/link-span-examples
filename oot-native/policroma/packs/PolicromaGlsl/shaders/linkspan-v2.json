@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "passes": [
+    { "name": "grade", "file": "shaders/grade.fsh", "divisor": 2, "inputs": ["scene", "scene.depth"] },
+    { "name": "present", "file": "shaders/present.fsh", "divisor": 1, "inputs": ["scene", "grade"] }
+  ],
+  "defaultProfile": "ambiente",
+  "profiles": [
+    { "id": "ambiente", "label": "Cor de ambiente", "defines": { "POLICROMA_GRADE": 1 } },
+    { "id": "controle", "label": "Cor original", "defines": { "POLICROMA_GRADE": 0 } }
+  ]
+}
