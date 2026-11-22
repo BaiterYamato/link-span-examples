@@ -1,0 +1,11 @@
+id = "linkspan.fairy_light_color"
+name = "Fairy Light Color"
+version = "0.2.1"
+api = ">=0.5.0 <0.6.0"
+entrypoint = "main.lua"
+games = ["oot"]
+description = "A luz de cada fada toma a cor da aura dela: a Navi ilumina de azul em repouso e de amarelo com inimigo, e as fadas dos Kokiri, de cura e das fontes passam a iluminar com a cor delas."
+
+[provider]
+abi_version = "1.2"
+win64 = "provider/linkspan_fairy_light_color.dll"
