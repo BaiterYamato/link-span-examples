@@ -705,9 +705,19 @@ void StableFluid::project() {
         const int half = n / 2;
         const size_t plane = static_cast<size_t>(n + 2) * half;
         float* colors[2] = {packedPress_.data() + half + 1, packedPress_.data() + plane + half + 1};
-        for (int j = 0; j < n; ++j)
-            for (int i = 0; i < n; ++i)
-                colors[(i + j) & 1][j * half + i / 2] = p[j * n + i];
+        // Compacta o RHS junto da pressão para que as varreduras leiam quatro valores contíguos.
+        const size_t cellPlane = static_cast<size_t>(n) * half;
+        float* packedRhs = scratch2_.data();  // o confinamento já consumiu esse scratch
+        for (int color = 0; color < 2; ++color) {
+            for (int j = 0; j < n; ++j) {
+                const int parity = (j + color) & 1;
+                for (int k = 0; k < half; ++k) {
+                    const int i = 2 * k + parity;
+                    colors[color][j * half + k] = p[j * n + i];
+                    packedRhs[color * cellPlane + j * half + k] = scratch_[j * n + i];
+                }
+            }
+        }
         const __m128 om = _mm_set1_ps(params_.omega);
         const __m128 quarter = _mm_set1_ps(0.25f);
         for (int it = 0; it < params_.iterations; ++it) {
@@ -730,40 +740,35 @@ void StableFluid::project() {
                     }
                     edge(0);
                     int k = 1;
-                    if (!allFluid_) {
-                        // Mesma conta do stencil escalar: pesos 0/1 por vizinho (mascara), 1/nf e omega por celula.
-                        const size_t base = static_cast<size_t>(j) * half;
-                        const size_t cellPlane = static_cast<size_t>(n) * half;
-                        const std::uint32_t* mask = sorMask_.data() + static_cast<size_t>(color) * 4 * cellPlane + base;
-                        const float* invs = sorInv_.data() + static_cast<size_t>(color) * cellPlane + base;
-                        for (; k + 4 <= half - 1; k += 4) {
-                            const float* rhs = scratch_.data() + static_cast<size_t>(j) * n + 2 * k + parity;
-                            const __m128 r = _mm_shuffle_ps(_mm_loadu_ps(rhs), _mm_loadu_ps(rhs + 4), _MM_SHUFFLE(2, 0, 2, 0));
-                            const auto m = [&](int c) {
-                                return _mm_castsi128_ps(_mm_loadu_si128(reinterpret_cast<const __m128i*>(mask + c * cellPlane + k)));
-                            };
-                            __m128 sum = _mm_add_ps(_mm_and_ps(m(0), _mm_loadu_ps(other + k + parity - 1)),
-                                                    _mm_and_ps(m(1), _mm_loadu_ps(other + k + parity)));
-                            sum = _mm_add_ps(sum, _mm_and_ps(m(2), _mm_loadu_ps(other + k - half)));
-                            sum = _mm_add_ps(sum, _mm_and_ps(m(3), _mm_loadu_ps(other + k + half)));
-                            const __m128 inv = _mm_loadu_ps(invs + k);
-                            const __m128 target = _mm_mul_ps(_mm_sub_ps(sum, r), inv);
-                            const __m128 omk = _mm_and_ps(_mm_cmpneq_ps(inv, _mm_setzero_ps()), om);
-                            const __m128 prev = _mm_loadu_ps(out + k);
-                            _mm_storeu_ps(out + k, _mm_add_ps(prev, _mm_mul_ps(omk, _mm_sub_ps(target, prev))));
-                        }
-                    }
+                    const size_t base = static_cast<size_t>(j) * half;
+                    const float* rhs = packedRhs + static_cast<size_t>(color) * cellPlane + base;
+                    const std::uint32_t* mask = sorMask_.data() + static_cast<size_t>(color) * 4 * cellPlane + base;
+                    const float* invs = sorInv_.data() + static_cast<size_t>(color) * cellPlane + base;
                     for (; k + 4 <= half - 1; k += 4) {
-                        const float* rhs = scratch_.data() + static_cast<size_t>(j) * n + 2 * k + parity;
-                        const __m128 a = _mm_loadu_ps(rhs);
-                        const __m128 b = _mm_loadu_ps(rhs + 4);
-                        const __m128 r = _mm_shuffle_ps(a, b, _MM_SHUFFLE(2, 0, 2, 0));
-                        __m128 sum = _mm_add_ps(_mm_loadu_ps(other + k + parity - 1), _mm_loadu_ps(other + k + parity));
-                        sum = _mm_add_ps(sum, _mm_loadu_ps(other + k - half));
-                        sum = _mm_add_ps(sum, _mm_loadu_ps(other + k + half));
-                        const __m128 target = _mm_mul_ps(_mm_sub_ps(sum, r), quarter);
+                        __m128 left = _mm_loadu_ps(other + k + parity - 1);
+                        __m128 right = _mm_loadu_ps(other + k + parity);
+                        __m128 down = _mm_loadu_ps(other + k - half);
+                        __m128 up = _mm_loadu_ps(other + k + half);
+                        const __m128 inv = allFluid_ ? quarter : _mm_loadu_ps(invs + k);
+                        __m128 weight = om;
+                        // 1/4 nas quatro lanes garante quatro vizinhos abertos em cada célula.
+                        if (!allFluid_ && _mm_movemask_ps(_mm_cmpeq_ps(inv, quarter)) != 0xF) {
+                            const auto m = [&](int c) {
+                                return _mm_castsi128_ps(_mm_loadu_si128(
+                                    reinterpret_cast<const __m128i*>(mask + c * cellPlane + k)));
+                            };
+                            left = _mm_and_ps(m(0), left);
+                            right = _mm_and_ps(m(1), right);
+                            down = _mm_and_ps(m(2), down);
+                            up = _mm_and_ps(m(3), up);
+                            weight = _mm_and_ps(_mm_cmpneq_ps(inv, _mm_setzero_ps()), om);
+                        }
+                        __m128 sum = _mm_add_ps(left, right);
+                        sum = _mm_add_ps(sum, down);
+                        sum = _mm_add_ps(sum, up);
+                        const __m128 target = _mm_mul_ps(_mm_sub_ps(sum, _mm_loadu_ps(rhs + k)), inv);
                         const __m128 prev = _mm_loadu_ps(out + k);
-                        _mm_storeu_ps(out + k, _mm_add_ps(prev, _mm_mul_ps(om, _mm_sub_ps(target, prev))));
+                        _mm_storeu_ps(out + k, _mm_add_ps(prev, _mm_mul_ps(weight, _mm_sub_ps(target, prev))));
                     }
                     for (; k < half; ++k) edge(k);
                 }
