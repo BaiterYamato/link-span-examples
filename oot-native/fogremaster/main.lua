@@ -30,6 +30,8 @@ local controls = {
         tooltip = "Deixa tochas e outras luzes pontuais colorirem a névoa próxima no DirectX 11." },
     { id = "scene_color", type = "checkbox", label = "Cor da névoa acompanha a cena", default = true,
         tooltip = "Segue a luz ambiente com transição suave. Desmarque para comparar com a cor fixa original." },
+    { id = "calibration_logs", type = "checkbox", label = "Logs de calibração", default = false,
+        tooltip = "Registra vento, luz, golpes, pousos e contadores durante medições." },
 }
 
 local persisted = ship.capabilities.has("core.storage")
@@ -72,10 +74,12 @@ end
 
 local function apply()
     local arguments = {}
-    for i, control in ipairs(controls) do
-        local value = values[control.id]
-        if type(value) == "boolean" then value = value and 1 or 0 end
-        arguments[i] = value
+    for _, control in ipairs(controls) do
+        if control.id ~= "calibration_logs" then
+            local value = values[control.id]
+            if type(value) == "boolean" then value = value and 1 or 0 end
+            arguments[#arguments + 1] = value
+        end
     end
     local result, err = ship.native.call("configure", table.concat(arguments, " "))
     report(result, err)
@@ -85,7 +89,7 @@ end
 local function change(id, value)
     local previous = values[id]
     values[id] = value
-    if not apply() then values[id] = previous end
+    if id ~= "calibration_logs" and not apply() then values[id] = previous end
     if persisted then ship.storage.set(storageKey(id), values[id]) end
 end
 
@@ -138,6 +142,7 @@ ship.events.on("game.ready", function()
     local lands, landBudget = "0", 8
     local lastLight, lightBudget = nil, 16
     ship.timer.every(20, function()
+        if not values.calibration_logs then return end
         local value = ship.native.call("stats", "")
         if not value then return end
         -- Vento da cena (R054): registra quando a base muda (troca de cena ou override), não a cada rajada.
