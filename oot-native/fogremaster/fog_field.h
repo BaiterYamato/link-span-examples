@@ -31,9 +31,9 @@ inline constexpr int MaxAttackTicks = 20;
 // 0.29.0: a referência do mantenedor é névoa de chão densa e branca, em bancos, que esconde o piso onde está
 // grossa e deixa vãos limpos entre eles. A 0.28 tinha ~0,2 de profundidade óptica vista de cima (um véu); agora um
 // banco cheio passa de 2.
-inline constexpr float RenderLayerHeight = 26.0f;
-inline constexpr float RenderFalloff = 6.0f;
-inline constexpr float RenderExtinction = 0.22f;
+inline constexpr float RenderLayerHeight = 16.0f;
+inline constexpr float RenderFalloff = 5.0f;
+inline constexpr float RenderExtinction = 0.25f;
 // Bancos: a densidade de repouso varia no chão entre BankLow e BankHigh vezes RestDensity, num padrão preso ao
 // mundo que deriva com o vento. A pressão da camada rasa age sobre o desvio em relação a esse repouso, então os
 // bancos ficam parados em equilíbrio e o golpe continua empurrando névoa de verdade de um lugar para outro.

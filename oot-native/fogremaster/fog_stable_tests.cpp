@@ -693,6 +693,30 @@ bool testInvalidationRules() {
     return ok & require(!fog::StableFluidTestAccess::topoDirty(f), "o step reconstroi a topologia");
 }
 
+bool testViscosityAndVorticity() {
+    fog::StableFluid f;
+    f.reset(64, kCell, 0.0f, 0.0f);
+    auto p = gameParams();
+    p.vorticity = 2.5f;
+    p.viscosity = 12.0f;
+    f.setParams(p);
+    const fog::Vec2 c{centerOf(f), centerOf(f)};
+    stirArc(f, c, 60.0f, 0.0f, 1.4f, 180.0f, 24.0f, 1.0f);
+    for (int t = 0; t < 40; ++t) f.step(kDt);
+    bool finite = true;
+    float vmax = 0.0f, wmax = 0.0f;
+    for (int j = 0; j < f.size(); ++j) {
+        for (int i = 0; i < f.size(); ++i) {
+            const float vx = f.velocityX(i, j), vz = f.velocityZ(i, j), rho = f.density(i, j);
+            finite &= std::isfinite(vx) && std::isfinite(vz) && std::isfinite(rho) && rho >= 0.0f;
+            vmax = std::max(vmax, std::hypot(vx, vz));
+            wmax = std::max(wmax, std::abs(f.vorticity(i, j)));
+        }
+    }
+    return require(finite && vmax > 1.0f && vmax <= p.maxSpeed && wmax > 0.05f,
+                   "viscosidade 12 + vorticidade 2.5 preserva vórtice finito sem explosão");
+}
+
 bool testGameTiming() {
     bool ok = true;
     for (int n : {128, 96}) {
@@ -808,6 +832,7 @@ int main(int argc, char** argv) {
     ok &= testCurlRecenter();
     ok &= testSolidSseMatchesScalar();
     ok &= testInvalidationRules();
+    ok &= testViscosityAndVorticity();
     if (!(argc == 2 && std::strcmp(argv[1], "--checks-only") == 0)) { ok &= testTiming(); ok &= testGameTiming(); }
     std::printf("%s\n", ok ? "TODOS OS TESTES PASSARAM" : "HA FALHAS");
     return ok ? 0 : 1;

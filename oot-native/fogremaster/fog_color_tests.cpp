@@ -99,6 +99,26 @@ int main() {
     frame.update(night, 2, 7, 100002, false, true);
     pass &= check(frame.color.value()[0] < fogcolor::Legacy[0] && frame.color.value()[0] > 0.69f,
                   "reativar começa suavemente a partir da cor fixa");
+    // Noite pela luz da cena (27/11): luz ambiente noturna de Kokiri capturada em jogo; a névoa escurece pela
+    // direcional, mesmo com o relógio travado em meio-dia.
+    const auto close = [](float a, float b) { return std::abs(a - b) < 0.001f; };
+    const fogcolor::Environment kokiriNight{{60, 80, 110}, {50, 50, 90}, {40, 50, 80}};
+    const auto lightDim = [](const fogcolor::Environment& env) {
+        return fogcolor::NightDim(fogcolor::DirectionalPeak(env), 0.24f, 110.0f, 180.0f);
+    };
+    pass &= check(close(lightDim(kokiriNight), 0.24f) && close(lightDim(day), 1.0f),
+                  "luz da cena: noite de Kokiri em 24%, dia cheio");
+    bool evening = true;
+    float last = 2.0f;
+    for (int peak = 255; peak >= 0; peak -= 5) {
+        const float value = lightDim({{60, 80, 110}, {float(peak), float(peak), float(peak)}, {40, 50, 80}});
+        evening &= value <= last + 0.000001f && value >= 0.24f - 0.000001f;
+        last = value;
+    }
+    pass &= check(evening, "direcional caindo de 255 a 0: o brilho só desce, sem salto");
+    pass &= check(close(fogcolor::NightDim(-1.0f, 0.24f, -0.12f, 0.22f), 0.24f) &&
+                      close(fogcolor::NightDim(1.0f, 0.24f, -0.12f, 0.22f), 1.0f),
+                  "relógio: sol abaixo do horizonte em 24%, a pino cheio");
     std::printf("Exemplos RGB: dia=(%.4f,%.4f,%.4f) entardecer=(%.4f,%.4f,%.4f) noite=(%.4f,%.4f,%.4f)\n",
                 d[0], d[1], d[2], s[0], s[1], s[2], n[0], n[1], n[2]);
     return pass ? 0 : 1;

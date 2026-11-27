@@ -57,6 +57,19 @@ inline Rgb Whiten(const Rgb& color, float amount) {
     return result;
 }
 
+// Fator da cor da névoa: `night` com o sinal abaixo de `low`, cheio acima de `high`, suave entre os dois.
+inline float NightDim(float signal, float night, float low, float high) {
+    const float t = std::clamp((signal - low) / (high - low), 0.0f, 1.0f);
+    return std::lerp(std::clamp(night, 0.0f, 1.0f), 1.0f, t * t * (3.0f - 2.0f * t));
+}
+
+// Pico da luz direcional da cena (0..255): o sinal de noite que acompanha o que se vê. A luz ambiente noturna de
+// Kokiri (60,80,110) passa do platô de exposição, mas a direcional cai para (50,50,90). O relógio sozinho não basta:
+// com a hora travada (FreezeTime) e a cena noturna da Seleção de Cena ele marcava meio-dia (playtest de 27/11).
+inline float DirectionalPeak(const Environment& env) {
+    return std::max({Channel(env.directional[0]), Channel(env.directional[1]), Channel(env.directional[2])});
+}
+
 class Color {
 public:
     const Rgb& value() const { return value_; }

@@ -652,6 +652,23 @@ bool shallowTests() {
         f->banks(fog::BankLow, fog::BankHigh, 0.0f, 0.0f, 0.0f);
         pass &= require(f->rest(3, 7) == fog::RestDensity && f->rest(20, 11) == fog::RestDensity,
                         "bancos: comprimento zero devolve o repouso uniforme");
+        // Dispersão alta reduz contraste entre vãos e picos dos bancos.
+        auto span = [&](float d) {
+            const float bankLo = std::lerp(0.10f, 0.88f, d);
+            const float bankHi = std::lerp(1.45f, 1.08f, d);
+            f->banks(bankLo, bankHi, fog::BankWavelength, 0.0f, 0.0f);
+            float lo = 10.0f, hi = 0.0f;
+            for (int z = 0; z < fog::Side; ++z) for (int x = 0; x < fog::Side; ++x) {
+                lo = std::min(lo, f->rest(x, z));
+                hi = std::max(hi, f->rest(x, z));
+            }
+            return std::pair{lo, hi};
+        };
+        const auto lowDisp = span(0.0f);
+        const auto highDisp = span(1.0f);
+        pass &= require(highDisp.first > lowDisp.first * 4.0f && highDisp.second < lowDisp.second &&
+                        (highDisp.second / highDisp.first) < 1.3f,
+                        "bancos: dispersão alta homogeneíza repouso sem picos isolados");
     }
     // 6) Pouso (0.31.0): a batida abre a névoa no lugar, empurra um anel mais denso para fora, não gira e fecha.
     {

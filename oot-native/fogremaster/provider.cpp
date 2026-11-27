@@ -124,10 +124,12 @@ constexpr int StableDefaultCellTenths = 100, StableMinCellTenths = 50, StableMax
 constexpr float StableCellUnit = 0.1f;
 // Faixas aceitas das CVars do fluido (valor bruto da CVar). Fora delas o solver recebe amortecimento negativo ou
 // ganhos absurdos e a velocidade vira inf/NaN; o clamp fica na fronteira, antes de setParams.
-constexpr int StableVorticityDefault = 40, StableVorticityMax = 400;
+constexpr int StableVorticityDefault = 25, StableVorticityMax = 400;
 constexpr int StableRecoveryDefault = 8, StableRecoveryMax = 500;
 constexpr int StableDampingDefault = 60, StableDampingMax = 1000;
 constexpr int StableCurlDefault = 0, StableCurlMax = 200;
+constexpr float StableViscosity = 12.0f;
+constexpr float AmbientWindCalmScale = 0.30f;
 // Releitura de repouso/paredes: a cada StableRefreshTicks ticks, fatiada em StableRefreshSlices ticks de linhas.
 constexpr int StableRefreshTicks = 10, StableRefreshSlices = 5;
 // Lâmina: varredura maior que isto entre duas poses é salto de pose (teleporte), não golpe (mesmo limite de Field::blade).
@@ -152,7 +154,7 @@ constexpr char DetailSetting[] = "gDeveloperTools.FogreDetailGrid"; // 0 desliga
 // 0 volta a fechar a grade fina pela máscara da grade de desenho (80 u) nas beiradas de barranco (comparação A/B).
 constexpr char CliffFitSetting[] = "gDeveloperTools.FogreCliffFit";
 // Névoa que o host desenharia acima do chão real: de FloatAllowed a FloatClosed u, a célula fina fecha.
-constexpr float FloatAllowed = 4.0f, FloatClosed = 16.0f;
+constexpr float FloatAllowed = 6.0f, FloatClosed = 24.0f;
 // Raio em volta do Link em que vale o ajuste. Fica dentro da área em que o host usa só a grade fina (480 u menos
 // a faixa de 80 u e meio passo de 20 u): a grade anda em passos de 40 u e, se a regra mudasse junto da borda dela,
 // a névoa do barranco saltaria a cada passo.
@@ -205,6 +207,11 @@ struct Fog {
     fogcolor::FrameColor sceneColor;
     fogcolor::Environment sceneLight; // última amostra, para o diagnóstico
     int densityPercent{100}, attackPercent{100}, liftPercent{100};
+    int heightPercent{100}, speedPercent{100}, dispersionPercent{65};
+    float drawSun{2.0f}, drawDim{1.0f}; // altura do sol (-1..1; 2 = sem céu) e fator aplicado à cor no último draw
+    bool dispersionRefresh{false};
+    std::array<float, fog::Side * fog::Side> groundFloor{};
+    std::array<bool, fog::Side * fog::Side> groundValid{};
     int attackTicks{fog::DefaultAttackTicks};
     int quality{-1}, hostQuality{1};
     unsigned draws{}, bodyTicks{}, actorTicks{}, cuts{};
@@ -259,8 +266,11 @@ constexpr char ShadowSetting[] = "gDeveloperTools.FogreShadow";
 constexpr int ShadowBrightness = 45;
 // Brilho com o sol abaixo do horizonte (%), e a faixa de altura do sol (fração do raio) em que o crepúsculo passa.
 constexpr char NightSetting[] = "gDeveloperTools.FogreNight";
-constexpr int NightBrightness = 55;
-constexpr float NightTwilight = 0.15f;
+constexpr int NightBrightness = 24;
+constexpr float NightTwilightLow = -0.12f;
+constexpr float NightTwilightHigh = 0.22f;
+// Pico da direcional (0..255) abaixo do qual a cena é noite e acima do qual é dia; a noite de Kokiri fica em 90.
+constexpr float NightLightLow = 110.0f, NightLightHigh = 180.0f;
 constexpr char WhiteSetting[] = "gDeveloperTools.FogreWhite";             // %
 constexpr char BankLowSetting[] = "gDeveloperTools.FogreBankLow";         // % do repouso
 constexpr char BankHighSetting[] = "gDeveloperTools.FogreBankHigh";       // % do repouso
@@ -326,11 +336,12 @@ void stableParams(Fog& mod) {
     p.damping = 0.01f * float(std::clamp(windSetting(mod, StableDampingSetting, StableDampingDefault), 0,
                                          StableDampingMax));
     p.curlAmp = float(std::clamp(windSetting(mod, StableCurlSetting, StableCurlDefault), 0, StableCurlMax));
+    p.viscosity = StableViscosity;
     p.windX = mod.windX;
     p.windZ = mod.windZ;
     const auto& a = mod.stable.params();
     if (a.vorticity == p.vorticity && a.recovery == p.recovery && a.damping == p.damping &&
-        a.curlAmp == p.curlAmp && a.windX == p.windX && a.windZ == p.windZ)
+        a.curlAmp == p.curlAmp && a.viscosity == p.viscosity && a.windX == p.windX && a.windZ == p.windZ)
         return;
     // O resto de `p` são os padrões da struct; `a` os conserva porque só este caminho chama setParams.
     mod.stable.setParams(p);
@@ -354,19 +365,27 @@ float valueNoise(float x, float z) {
     return (a + (b - a) * tx) + ((c + (d - c) * tx) - (a + (b - a) * tx)) * tz;
 }
 float wisps(float wx, float wz, float scale) {
-    // Duas oitavas largas (>= 9 células): a oitava de 0,2 x escala ficava abaixo de 3 células e virava linhas no volume.
-    return 0.65f * valueNoise(wx / scale, wz / scale) +
-           0.35f * valueNoise(wx / (0.5f * scale) + 17.3f, wz / (0.5f * scale) - 4.1f); // 0..1, média ~0.5
+    // Rotacionar o domínio da segunda e primeira oitava evita cristas alinhadas à malha XZ.
+    const float rx = 0.857f * wx - 0.515f * wz;
+    const float rz = 0.515f * wx + 0.857f * wz;
+    const float sx = 0.545f * wx + 0.839f * wz;
+    const float sz = -0.839f * wx + 0.545f * wz;
+    return 0.65f * valueNoise(rx / scale, rz / scale) +
+           0.35f * valueNoise(sx / (0.5f * scale) + 17.3f, sz / (0.5f * scale) - 4.1f); // 0..1, média ~0.5
 }
 
-float stableContrastSetting(const Fog& mod) { return 0.01f * float(windSetting(mod, StableWispSetting, 110)); }
+float stableContrastSetting(const Fog& mod) {
+    const float d = std::clamp(mod.dispersionPercent * 0.01f, 0.0f, 1.0f);
+    const int defaultWisp = int(std::lround(std::lerp(75.0f, 25.0f, d)));
+    return 0.01f * float(windSetting(mod, StableWispSetting, defaultWisp));
+}
 float stableWispScaleSetting(const Fog& mod) {
     return float(std::max(windSetting(mod, StableWispScaleSetting, 180), 20));
 }
 
 float stableRestAt(const Fog& mod, float contrast, float scale, float wx, float wz) {
     const float k = std::clamp(1.0f + contrast * (wisps(wx, wz, scale) - 0.5f) * 2.0f, 0.05f, 2.2f);
-    return std::min(mod.field.restWorld(wx, wz) * k, fog::MaxDensity);
+    return std::min(mod.field.restWorld(wx, wz) * k, 1.05f);
 }
 
 bool stableSolidAt(const Fog& mod, float wx, float wz) {
@@ -510,12 +529,13 @@ void updateWind(Fog& mod, const PlayState& play) {
     const float cx = mod.field.worldX(fog::Side / 2), cz = mod.field.worldZ(fog::Side / 2);
     const auto base = fogwind::Base(scene);
     const auto wind = fogwind::Carrier(scene, cx, cz, mod.windSeconds);
+    const float speedScale = std::max(0, mod.speedPercent) * 0.01f * AmbientWindCalmScale;
     mod.windBaseX = base[0];
     mod.windBaseZ = base[2];
-    mod.windX = wind[0];
-    mod.windZ = wind[1];
-    mod.field.setWind(wind[0], wind[1]);
-    if (mod.stackedTerrain) mod.upperField.setWind(wind[0], wind[1]);
+    mod.windX = wind[0] * speedScale;
+    mod.windZ = wind[1] * speedScale;
+    mod.field.setWind(mod.windX, mod.windZ);
+    if (mod.stackedTerrain) mod.upperField.setWind(mod.windX, mod.windZ);
 }
 
 // Camada e bancos. `drift` anda o padrão dos bancos com o vento deste tick; na troca de cena ele só é reaplicado,
@@ -524,16 +544,20 @@ void updateLook(Fog& mod, bool drift) {
     const auto setting = [&mod](const char* key, float fallback, float scale, float lo, float hi) {
         return std::clamp(float(windSetting(mod, key, int(std::lround(fallback / scale)))) * scale, lo, hi);
     };
-    mod.layerHeight = setting(LayerHeightSetting, fog::RenderLayerHeight, 1.0f, 4.0f, 96.0f);
-    mod.falloff = setting(FalloffSetting, fog::RenderFalloff, 1.0f, 2.0f, 96.0f);
+    const float heightScale = std::clamp(mod.heightPercent * 0.01f, 0.35f, 2.5f);
+    mod.layerHeight = setting(LayerHeightSetting, fog::RenderLayerHeight * heightScale, 1.0f, 4.0f, 96.0f);
+    mod.falloff = setting(FalloffSetting, std::max(2.5f, fog::RenderFalloff * heightScale), 1.0f, 2.0f, 96.0f);
     mod.extinction = setting(ExtinctionSetting, fog::RenderExtinction, 0.001f, 0.0f, 2.0f);
     mod.white = setting(WhiteSetting, fogcolor::White, 0.01f, 0.0f, 1.0f);
     if (drift) {
         mod.bankX += mod.windX * fog::StepSeconds * fog::BankDrift;
         mod.bankZ += mod.windZ * fog::StepSeconds * fog::BankDrift;
     }
-    const float low = setting(BankLowSetting, fog::BankLow, 0.01f, 0.0f, 1.0f);
-    const float high = setting(BankHighSetting, fog::BankHigh, 0.01f, 0.0f, 1.0f / fog::RestDensity);
+    const float d = std::clamp(mod.dispersionPercent * 0.01f, 0.0f, 1.0f);
+    const float defaultLow = std::lerp(0.10f, 0.88f, d);
+    const float defaultHigh = std::lerp(1.45f, 1.08f, d);
+    const float low = setting(BankLowSetting, defaultLow, 0.01f, 0.0f, 1.0f);
+    const float high = setting(BankHighSetting, defaultHigh, 0.01f, low, 1.0f / fog::RestDensity);
     const float size = setting(BankSizeSetting, fog::BankWavelength, 1.0f, 0.0f, 2048.0f);
     mod.field.banks(low, high, size * mod.bankScale, mod.bankX, mod.bankZ);
     mod.upperField.banks(low, high, size * mod.bankScale, mod.bankX, mod.bankZ);
@@ -622,6 +646,8 @@ void resetFields(Fog& mod, float x, float z, float spacing) {
     applyTransport(mod);
     mod.field.reset(x, z, spacing);
     if (mod.stackedTerrain) mod.upperField.reset(x, z, spacing);
+    mod.groundFloor.fill(0.0f);
+    mod.groundValid.fill(false);
     // O fluido NÃO reinicia aqui: o campo recém-zerado ainda não tem terreno (células fechadas) e o sampler
     // sólido o leria como parede. Quem chama reinicia com stableReset depois de sampleFloor.
     mod.stableReady = false;
@@ -698,6 +724,9 @@ void sampleFloor(Fog& mod, PlayState& play, int dx, int dz, bool full) {
                     ++mod.rims;
                 }
             }
+            const int cellIndex = z * fog::Side + x;
+            mod.groundFloor[cellIndex] = here.base;
+            mod.groundValid[cellIndex] = here.open;
             mod.field.terrain(x, z, here.base, open, !full && !kokiri);
         }
     }
@@ -768,7 +797,8 @@ VillageCell villageGround(Fog& mod, PlayState& play, float worldX, float worldZ)
 
 void sampleVillage(Fog& mod, PlayState& play, int dx, int dz, bool full) {
     auto& village = mod.village;
-    constexpr float drop = CliffSlope * VillageSpacing;
+    constexpr float rimDistance = 0.45f * VillageSpacing;
+    constexpr float rimDrop = CliffSlope * rimDistance;
     constexpr float sides[8][2] = {{1.0f, 0.0f}, {-1.0f, 0.0f}, {0.0f, 1.0f}, {0.0f, -1.0f},
                                    {1.0f, 1.0f}, {-1.0f, 1.0f}, {1.0f, -1.0f}, {-1.0f, -1.0f}};
     for (int z = 0; z < VillageSide; ++z) {
@@ -777,14 +807,13 @@ void sampleVillage(Fog& mod, PlayState& play, int dx, int dz, bool full) {
             const float worldX = village.worldX(x), worldZ = village.worldZ(z);
             VillageCell cell = villageGround(mod, play, worldX, worldZ);
             if (cell.open) {
-                VillageCell around[8];
                 float lower[8];
                 int lowerCount = 0;
                 for (int side = 0; side < 8; ++side) {
-                    around[side] = villageGround(mod, play, worldX + sides[side][0] * VillageSpacing,
-                                                 worldZ + sides[side][1] * VillageSpacing);
-                    if (around[side].open && cell.floor - around[side].floor > SpikeRise)
-                        lower[lowerCount++] = around[side].floor;
+                    const VillageCell neighbor = villageGround(mod, play, worldX + sides[side][0] * VillageSpacing,
+                                                               worldZ + sides[side][1] * VillageSpacing);
+                    if (neighbor.open && cell.floor - neighbor.floor > SpikeRise)
+                        lower[lowerCount++] = neighbor.floor;
                 }
                 // Pico isolado (pedra, placa, cerca, tábua de ponte): a amostra caiu em cima de um objeto e quase
                 // toda a volta está mais baixa. Vale o chão da volta, senão a névoa sobe num ponto só ou a célula
@@ -793,10 +822,19 @@ void sampleVillage(Fog& mod, PlayState& play, int dx, int dz, bool full) {
                     std::sort(lower, lower + lowerCount);
                     cell.floor = lower[lowerCount / 2];
                 }
+                int steepDrops = 0;
                 for (int side = 0; side < 8; ++side) {
-                    if (around[side].open && cell.floor - around[side].floor > drop) cell.open = false;
+                    const VillageCell next = villageGround(mod, play, worldX + sides[side][0] * rimDistance,
+                                                           worldZ + sides[side][1] * rimDistance);
+                    if (next.open && cell.floor - next.floor > rimDrop) ++steepDrops;
                 }
-                cell.cliff = !cell.open;
+                if (steepDrops >= 5) {
+                    cell.open = false;
+                    cell.cliff = false;
+                } else if (steepDrops >= 1) {
+                    cell.open = false;
+                    cell.cliff = true;
+                }
             }
             village.cells[z * VillageSide + x] = cell;
         }
@@ -997,11 +1035,14 @@ bool submitVillage(Fog& mod, PlayState* play, const fogcolor::Rgb& color, float 
                                              CliffFitInner, CliffFitOuter)
                              : 0.0f;
                 if (reach > 0.0f) {
-                    const bool groundKnown = std::isfinite(cell.floor) && cell.floor > -255.0f;
+                    const int fineIndex = z * fog::Side + x;
+                    const float realFloor = mod.groundValid[fineIndex] ? mod.groundFloor[fineIndex] : cell.floor;
+                    const bool groundKnown = (mod.groundValid[fineIndex] || cell.open) &&
+                                             std::isfinite(realFloor) && realFloor > -255.0f;
                     if (weightSum < 0.01f || !groundKnown) {
                         fitted = 0.0f;
                     } else {
-                        const float hanging = floorSum / weightSum - cell.floor;
+                        const float hanging = floorSum / weightSum - realFloor;
                         fitted *= 1.0f - smooth((hanging - FloatAllowed) / (FloatClosed - FloatAllowed));
                     }
                     open += (fitted - open) * reach;
@@ -1101,6 +1142,16 @@ void followPlayer(Fog& mod, PlayState& play, const Actor& player) {
         if (shift) {
             mod.field.shift(dx, dz);
             if (mod.stackedTerrain) mod.upperField.shift(dx, dz);
+            const auto prevFloor = mod.groundFloor;
+            const auto prevValid = mod.groundValid;
+            mod.groundFloor.fill(0.0f);
+            mod.groundValid.fill(false);
+            for (int z = std::max(0, -dz); z < std::min(fog::Side, fog::Side - dz); ++z) {
+                for (int x = std::max(0, -dx); x < std::min(fog::Side, fog::Side - dx); ++x) {
+                    mod.groundFloor[z * fog::Side + x] = prevFloor[(z + dz) * fog::Side + x + dx];
+                    mod.groundValid[z * fog::Side + x] = prevValid[(z + dz) * fog::Side + x + dx];
+                }
+            }
         }
         if (changeFloor) mod.referenceFloor = y;
         sampleFloor(mod, play, dx, dz, changeFloor);
@@ -1336,6 +1387,17 @@ ShipNativeStatus SHIP_NATIVE_CALL update(void* user, const ShipNativeHookCall* c
         mod.stableMicros = uint32_t(std::chrono::duration_cast<std::chrono::microseconds>(
             std::chrono::steady_clock::now() - t0).count());
         mod.stableMicrosPeak = std::max(mod.stableMicrosPeak, mod.stableMicros);
+        if (mod.dispersionRefresh) {
+            mod.dispersionRefresh = false;
+            for (int j = 0; j < mod.stable.size(); ++j) {
+                for (int i = 0; i < mod.stable.size(); ++i) {
+                    if (!mod.stable.solid(i, j) &&
+                        std::hypot(mod.stable.velocityX(i, j), mod.stable.velocityZ(i, j)) < 1.0f) {
+                        mod.stable.setDensity(i, j, mod.stable.rest(i, j));
+                    }
+                }
+            }
+        }
     }
     if (mod.stackedTerrain) {
         mod.upperField.beginTick();
@@ -1491,12 +1553,19 @@ ShipNativeStatus SHIP_NATIVE_CALL draw(void* user, const ShipNativeHookCall* cal
     // interior o relógio não muda a luz.
     // Os dois ajustes corrigem a mesma coisa (cena mais escura do que a luz ambiente indica): vale o mais forte.
     // Multiplicados, o Graveyard à noite ficava em 25% e a névoa virava sombra (14/11 16:55).
+    // 27/11: além do sol, a luz direcional da cena (fogcolor::DirectionalPeak). Com a hora travada e a cena
+    // noturna o sol marcava meio-dia e a névoa ficava 3x mais clara que o céu; vale o mais escuro dos dois.
     if (!play->envCtx.skyboxDisabled) {
         const float sun = std::clamp(play->envCtx.sunPos.y / 3000.0f, -1.0f, 1.0f);
-        const float night = std::clamp(windSetting(mod, NightSetting, NightBrightness) * 0.01f, 0.0f, 1.0f);
-        const float t = std::clamp((sun + NightTwilight) / (2.0f * NightTwilight), 0.0f, 1.0f);
-        dim = std::min(dim, std::lerp(night, 1.0f, t * t * (3.0f - 2.0f * t)));
+        const float night = windSetting(mod, NightSetting, NightBrightness) * 0.01f;
+        const float light = fogcolor::DirectionalPeak(mod.sceneLight);
+        dim = std::min({dim, fogcolor::NightDim(sun, night, NightTwilightLow, NightTwilightHigh),
+                        fogcolor::NightDim(light, night, NightLightLow, NightLightHigh)});
+        mod.drawSun = sun;
+    } else {
+        mod.drawSun = 2.0f;
     }
+    mod.drawDim = dim;
     for (auto& channel : color) channel *= dim;
     constexpr int side = fog::Side;
     const float fade = mod.appearance * mod.appearance * (3.0f - 2.0f * mod.appearance);
@@ -1701,7 +1770,7 @@ ShipNativeStatus SHIP_NATIVE_CALL stats(void* user, const char*, uint32_t len, S
                                 "volume_pref=%d compute_pref=%d particles_pref=%d density_pct=%d attack_pct=%d quality=%d "
                                 "push_ms=%d lift_pct=%d loft=%ld lights_pref=%d decks=%u decklift=%ld "
                                 "windbase=%ld,%ld wind=%ld,%ld scene_color=%d fog_rgb=%ld,%ld,%ld solver=%d "
-                                "trace=%u swirl=%ld,%ld,%ld gap=%ld,%ld,%ld rims=%u cell=%ld env=%d,%d,%d/%d,%d,%d/%d,%d,%d lands=%u landpeak=%ld fluid=%u,%u,%u,%ld,%ld wide=%d solids=%u curl=%ld",
+                                "trace=%u swirl=%ld,%ld,%ld gap=%ld,%ld,%ld rims=%u cell=%ld env=%d,%d,%d/%d,%d,%d/%d,%d,%d lands=%u landpeak=%ld fluid=%u,%u,%u,%ld,%ld wide=%d solids=%u curl=%ld height_pct=%d speed_pct=%d dispersion_pct=%d sun=%ld dim=%ld",
                                 mod.enabled, mod.draws, mod.bodyTicks, mod.actorTicks, mod.cuts, mod.cylinders,
                                 mod.spheres, mod.quads, mod.enemyAttacks, mod.volumes, mod.spins, mod.flowSubmissions,
                                 mod.gridShifts, mod.blasts, mod.walls, mod.water, mod.preferVolume, mod.preferCompute,
@@ -1725,14 +1794,16 @@ ShipNativeStatus SHIP_NATIVE_CALL stats(void* user, const char*, uint32_t len, S
                                 int(mod.sceneLight.fog[1]), int(mod.sceneLight.fog[2]), mod.landings,
                                 std::lround(mod.landPeak), mod.stirs, mod.stableMicros, mod.stableMicrosPeak,
                                 std::lround(vmax), std::lround(10.0f * wmax), hostWideDetail(mod) ? 1 : 0, solids,
-                                std::lround(mod.stable.params().curlAmp));
+                                std::lround(mod.stable.params().curlAmp), mod.heightPercent, mod.speedPercent,
+                                mod.dispersionPercent, std::lround(1000.0f * mod.drawSun),
+                                std::lround(1000.0f * mod.drawDim));
     return n > 0 && n < int(sizeof(message)) ? write(writer, message, uint32_t(n)) : SHIP_NATIVE_FAILURE;
 }
 
 ShipNativeStatus SHIP_NATIVE_CALL configure(void* user, const char* args, uint32_t len, ShipNativeWriteFn write,
                                              void* writer) {
-    if (!args || !len || len > 48) return SHIP_NATIVE_INVALID_ARGUMENT;
-    int values[11]{0, 0, 0, 0, 0, 0, 0, 0, 100, 1, 1};
+    if (!args || !len || len > 96) return SHIP_NATIVE_INVALID_ARGUMENT;
+    int values[14]{0, 0, 0, 0, 0, 0, 0, 0, 100, 1, 1, 100, 100, 65};
     const char* end = args + len;
     const char* next = args;
     for (size_t i = 0; i < std::size(values); ++i) {
@@ -1746,10 +1817,12 @@ ShipNativeStatus SHIP_NATIVE_CALL configure(void* user, const char* args, uint32
             next = parsed.ptr + 1;
         }
     }
-    const auto [enabled, volume, compute, particles, density, attack, pushMs, quality, lift, lights, sceneColor] = values;
+    const auto [enabled, volume, compute, particles, density, attack, pushMs, quality, lift, lights, sceneColor,
+                height, speed, dispersion] = values;
     if ((enabled & ~1) || (volume & ~1) || (compute & ~1) || (particles & ~1) || (lights & ~1) || (sceneColor & ~1) ||
         density < 25 || density > 200 || attack < 25 || attack > 200 || quality < -1 || quality > 2 ||
-        lift < 0 || lift > 200 ||
+        lift < 0 || lift > 200 || height < 35 || height > 250 || speed < 0 || speed > 250 ||
+        dispersion < 0 || dispersion > 100 ||
         pushMs < fog::MinAttackTicks * fog::AttackTickMilliseconds ||
         pushMs > fog::MaxAttackTicks * fog::AttackTickMilliseconds) {
         return SHIP_NATIVE_INVALID_ARGUMENT;
@@ -1774,6 +1847,7 @@ ShipNativeStatus SHIP_NATIVE_CALL configure(void* user, const char* args, uint32
         (mod.liftPercent == 0) != (lift == 0)) {
         ++mod.generation;
     }
+    const bool dispersionChanged = mod.dispersionPercent != dispersion;
     mod.enabled = enabled != 0;
     mod.preferVolume = volume != 0;
     mod.preferCompute = compute != 0;
@@ -1784,8 +1858,15 @@ ShipNativeStatus SHIP_NATIVE_CALL configure(void* user, const char* args, uint32
     mod.liftPercent = lift;
     mod.preferLighting = lights != 0;
     mod.preferSceneColor = sceneColor != 0;
+    mod.heightPercent = height;
+    mod.speedPercent = speed;
+    mod.dispersionPercent = dispersion;
     if (!mod.preferSceneColor) mod.sceneColor.color.fixed();
     mod.attackTicks = (pushMs + fog::AttackTickMilliseconds / 2) / fog::AttackTickMilliseconds;
+    if (dispersionChanged) {
+        mod.stableRestAge = StableRefreshTicks;
+        mod.dispersionRefresh = true;
+    }
     return stats(user, nullptr, 0, write, writer);
 }
 

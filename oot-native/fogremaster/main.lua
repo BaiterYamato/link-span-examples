@@ -30,6 +30,12 @@ local controls = {
         tooltip = "Deixa tochas e outras luzes pontuais colorirem a névoa próxima no DirectX 11." },
     { id = "scene_color", type = "checkbox", label = "Cor da névoa acompanha a cena", default = true,
         tooltip = "Segue a luz ambiente com transição suave. Desmarque para comparar com a cor fixa original." },
+    { id = "height", type = "slider_int", label = "Altura da névoa", default = 100, min = 35, max = 250,
+        step = 5, format = "%d%%", tooltip = "Ajusta a altura da camada de névoa rente ao chão." },
+    { id = "speed", type = "slider_int", label = "Velocidade da névoa", default = 100, min = 0, max = 250,
+        step = 5, format = "%d%%", tooltip = "Velocidade do deslocamento ambiente (0% = parada até você interagir)." },
+    { id = "dispersion", type = "slider_int", label = "Dispersão da névoa", default = 65, min = 0, max = 100,
+        step = 5, format = "%d%%", tooltip = "Espalha a névoa de forma mais uniforme pelo cenário, reduzindo vãos e acúmulos." },
     { id = "calibration_logs", type = "checkbox", label = "Logs de calibração", default = false,
         tooltip = "Registra vento, luz, golpes, pousos e contadores durante medições." },
 }
