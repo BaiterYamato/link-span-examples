@@ -95,6 +95,17 @@ int main() {
                      legacyShift(distance, VillageTestSpacing, 3.0f);
     }
     pass &= check(unchanged, "fora de Kokiri: overlap e empates mantem a decisao antiga");
+
+    // Ajuste de barranco (27/11): com o fluido fino como detalhe, o alcance nao depende de onde o Link esta.
+    // Preso a 250-360 u dele, a nevoa dos degraus trocava de uma vez quando ele andava.
+    bool worldStable = true;
+    for (int i = 0; i <= 120; ++i) worldStable &= cliffFitReach(true, i * 10.0f, 250.0f, 360.0f) == 1.0f;
+    pass &= check(worldStable, "barranco com fluido: alcance igual a 0, 300 e 1200 u do Link");
+    pass &= check(cliffFitReach(false, 200.0f, 250.0f, 360.0f) == 1.0f &&
+                      cliffFitReach(false, 400.0f, 250.0f, 360.0f) == 0.0f &&
+                      cliffFitReach(false, 305.0f, 250.0f, 360.0f) > 0.0f &&
+                      cliffFitReach(false, 305.0f, 250.0f, 360.0f) < 1.0f,
+                  "barranco sem fluido: anel de 250-360 u em volta do Link (grade de 40 u)");
     std::printf("%s\n", pass ? "Todos os testes passaram." : "Ha criterios de aceite reprovados.");
     return pass ? 0 : 1;
 }

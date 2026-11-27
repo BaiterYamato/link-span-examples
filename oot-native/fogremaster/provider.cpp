@@ -10,6 +10,17 @@ int followShiftAxis(float distance, float spacing, float overlap, float hysteres
     if (hysteresis > 0.0f && std::abs(cells) <= overlap + 0.5f + hysteresis) return 0;
     return static_cast<int>(std::lround(cells - std::clamp(cells, -overlap, overlap)));
 }
+
+// Alcance (0..1) do ajuste de barranco da grade fina. Com o fluido fino como detalhe, a máscara vale na janela
+// inteira: a borda dela anda com o Link em passos de ~9 u e o host já a funde com a grade de 80 u. Presa a 250-360 u
+// do Link, a máscara trocava de uma vez a névoa dos degraus quando ele andava, sem encostar nela (playtest de 27/11:
+// diferença média 34 no degrau, contra 2 com o ajuste desligado). Sem o fluido, o detalhe é a grade de 25 células,
+// que anda em passos de 40 u, e o anel em volta do Link continua escondendo esses passos.
+float cliffFitReach(bool fluidDetail, float linkDistance, float inner, float outer) {
+    if (fluidDetail) return 1.0f;
+    const float t = std::clamp((outer - linkDistance) / (outer - inner), 0.0f, 1.0f);
+    return t * t * (3.0f - 2.0f * t);
+}
 } // namespace
 
 // O teste isolado inclui apenas a decisão acima, sem os headers do SDK.
@@ -863,6 +874,14 @@ bool submitVillage(Fog& mod, PlayState* play, const fogcolor::Rgb& color, float 
     // Testado e descartado (14/11): pôr a célula de beirada no piso desenhado dentro da grade fina. Muitas dessas
     // células caem em telhado ou toco, puxam o piso para cima e a névoa em volta some.
     const bool cliffFit = sendDetail && windSetting(mod, CliffFitSetting, 1) != 0;
+    // O fluido fino vira o detalhe quando cabe no host e na grade de desenho. Decidido antes do ajuste de barranco,
+    // que muda de alcance conforme o detalhe (cliffFitReach).
+    const int stableN = mod.stableReady ? mod.stable.size() : 0;
+    const bool fluidDetail = sendDetail && stableN > 0 && stableN <= hostDetailMaxSide(mod) &&
+                             mod.stable.cellCenterX(0) >= village.worldX(0) &&
+                             mod.stable.cellCenterX(stableN - 1) <= village.worldX(VillageSide - 1) &&
+                             mod.stable.cellCenterZ(0) >= village.worldZ(0) &&
+                             mod.stable.cellCenterZ(stableN - 1) <= village.worldZ(VillageSide - 1);
     for (int z = 0; z < VillageSide; ++z) {
         for (int x = 0; x < VillageSide; ++x) {
             const int i = z * VillageSide + x;
@@ -974,8 +993,8 @@ bool submitVillage(Fog& mod, PlayState* play, const fogcolor::Rgb& color, float 
                 // célula fina só fecha onde esse piso fica acima do chão real dela, ou seja, onde a névoa ficaria
                 // pendurada no ar. Piso abaixo do chão só enterra a névoa, que o próprio terreno esconde.
                 const float reach =
-                    cliffFit ? smooth((CliffFitOuter - std::hypot(worldX - mod.linkX, worldZ - mod.linkZ)) /
-                                      (CliffFitOuter - CliffFitInner))
+                    cliffFit ? cliffFitReach(fluidDetail, std::hypot(worldX - mod.linkX, worldZ - mod.linkZ),
+                                             CliffFitInner, CliffFitOuter)
                              : 0.0f;
                 if (reach > 0.0f) {
                     const bool groundKnown = std::isfinite(cell.floor) && cell.floor > -255.0f;
@@ -1002,8 +1021,7 @@ bool submitVillage(Fog& mod, PlayState* play, const fogcolor::Rgb& color, float 
         // 0.33.0: com o Stable Fluids, a grade fina passa a ser o fluido no lado escolhido. A máscara de abertura
         // (barranco, água, parede) é a mesma da grade de 25, lida bilinear no ponto de cada célula fina.
         static ShipOotFogDetailCellV1 stableCells[StableMaxSide * StableMaxSide];
-        if (mod.stableReady && (features & LINKSPAN_OOT_FOG_FLOW_DETAIL_GRID) &&
-            mod.stable.size() <= hostDetailMaxSide(mod)) {
+        if (fluidDetail) {
             const auto openAt = [&](float wx, float wz) {
                 const float gx = std::clamp((wx - field.worldX(0)) / spacing, 0.0f, fog::Side - 1.001f);
                 const float gz = std::clamp((wz - field.worldZ(0)) / spacing, 0.0f, fog::Side - 1.001f);
