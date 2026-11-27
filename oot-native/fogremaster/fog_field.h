@@ -119,6 +119,8 @@ struct SolverOptions {
 };
 
 SolverOptions shallowOptions();
+// The host validates extinction in [0, 1] independently of the cell density limit.
+float volumeExtinction(float extinction, float densityScale);
 
 struct ProjectionStats {
     float meanBefore{}, meanAfter{}, maxAfter{}; // |divergence| in seconds^-1, on MAC faces.
@@ -160,6 +162,7 @@ public:
     float circulation(float x, float z) const;
     float lowestDensity(float x, float z, float radius) const;
     static bool connected(const Cell& a, const Cell& b);
+    bool surfaceQuadOpen(int x, int z) const;
 
 private:
     friend struct FieldTestAccess;

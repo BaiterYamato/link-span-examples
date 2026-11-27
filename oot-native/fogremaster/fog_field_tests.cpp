@@ -860,6 +860,33 @@ int main(int argc, char** argv) {
     pass &= check(field.disturb(center, {0, 0, 48}, 52, 0, 55, {0, 0, 40}, 0.8f), "grounded body");
     pass &= check(field.cell(12, 13).density < 0.5f, "swept body opens a trail");
     pass &= check(!field.disturb({0, 180, 0}, {0, 180, 48}, 52, 0, 30, {0, 0, 40}, 0.8f), "airborne body");
+    {
+        auto swept = std::make_unique<fog::Field>();
+        flatField(*swept, 32.0f, calmShallow());
+        pass &= check(!swept->disturb({0, 80, 0}, {0, 60, 0}, 36, 0, 32, {}, 0.5f),
+                      "vertical sweep fully above the fog leaves it untouched");
+        pass &= check(swept->disturb({0, 80, 0}, {0, 20, 0}, 36, 0, 32, {}, 0.5f) &&
+                          swept->cell(12, 12).density < fog::RestDensity,
+                      "vertical descent sweeps fog before the landing impulse");
+        flatField(*swept, 32.0f, calmShallow());
+        pass &= check(swept->disturb({0, 80, 0}, {64, 20, 0}, 40, 0, 32, {}, 0.5f) &&
+                          swept->cell(12, 12).density < fog::RestDensity,
+                      "later part of an oblique sweep reaches the cell within its radius");
+        pass &= check(swept->surfaceQuadOpen(12, 12), "no wall: draw the fallback quad");
+        swept->blockEdge(13, 12, 13, 13, true);
+        pass &= check(!swept->surfaceQuadOpen(12, 12), "fallback quad cannot cross a closed wall face");
+        swept->blockEdge(13, 12, 13, 13, false);
+        pass &= check(swept->surfaceQuadOpen(12, 12), "opening the face restores the fallback quad");
+        fog::FieldTestAccess::cell(*swept, 12, 12).density = 1.2f;
+        pass &= check(swept->lowestDensity(0.0f, 0.0f, 16.0f) == 1.2f,
+                      "gap telemetry can report a minimum above the wire density cap");
+        const float low = 0.25f / fog::RestDensity;
+        const float normal = 1.0f / fog::RestDensity;
+        pass &= check(std::abs(fog::volumeExtinction(fog::RenderExtinction, normal) -
+                               4.0f * fog::volumeExtinction(fog::RenderExtinction, low)) < 0.0001f &&
+                          fog::volumeExtinction(0.7f, low) < 1.0f && fog::volumeExtinction(0.7f, normal) == 1.0f,
+                      "density keeps the 25/100 optical scale and cannot overflow the grid contract");
+    }
     pass &= check(field.blade({32, 20, 0}, {32, 20, 64}, {64, 25, 0}, {96, 25, 64},
                               64.0f, 1.0f, fog::DefaultAttackTicks), "empty-space blade");
     pass &= check(field.cell(14, 13).vx == 0.0f && field.cell(14, 13).density == fog::RestDensity,

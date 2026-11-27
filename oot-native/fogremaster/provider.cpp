@@ -425,7 +425,7 @@ void stableReset(Fog& mod) {
 }
 
 float stableStirGain(const Fog& mod) {
-    return 0.01f * float(windSetting(mod, StableStirSetting, 100)) * mod.attackPercent * 0.01f;
+    return 0.01f * float(windSetting(mod, StableStirSetting, 100));
 }
 
 // Segmento a-b varrido com a velocidade v (u/s): a força entra pelo solver, o giro sai dele.
@@ -475,7 +475,7 @@ void stableBlade(Fog& mod, fog::Point oldBase, fog::Point oldTip, fog::Point bas
     const auto lerp = [](fog::Point p, fog::Point q, float t) {
         return fog::Point{p.x + (q.x - p.x) * t, p.y + (q.y - p.y) * t, p.z + (q.z - p.z) * t};
     };
-    const float gain = stableStirGain(mod);
+    const float gain = stableStirGain(mod) * (mod.attackPercent * 0.01f);
     for (int k = 0; k < 4; ++k) {
         const float t0 = k / 4.0f, t1 = (k + 1) / 4.0f, tm = 0.5f * (t0 + t1);
         const auto old = lerp(oldBase, oldTip, tm), now = lerp(base, tip, tm);
@@ -932,7 +932,7 @@ bool submitVillage(Fog& mod, PlayState* play, const fogcolor::Rgb& color, float 
     const ShipOotFogGridV1 grid{sizeof(grid), VillageSide, VillageSide,
                                 village.worldX(0), village.worldX(VillageSide - 1),
                                 village.worldZ(0), village.worldZ(VillageSide - 1),
-                                mod.layerHeight, mod.falloff, mod.extinction * density, KokiriEdgeFeather,
+                                mod.layerHeight, mod.falloff, fog::volumeExtinction(mod.extinction, density), KokiriEdgeFeather,
                                 {color[0], color[1], color[2]}, cells};
     const auto flags = LINKSPAN_OOT_FOG_FLOW_VORTICES | LINKSPAN_OOT_FOG_FLOW_CPU_FIELD |
                        (mod.preferParticles ? LINKSPAN_OOT_FOG_FLOW_PARTICLES : 0u) |
@@ -1349,7 +1349,8 @@ ShipNativeStatus SHIP_NATIVE_CALL update(void* user, const ShipNativeHookCall* c
         if (mod.airFrames >= 3 && mod.fallSpeed >= fog::LandMinSpeed) {
             const float speed = mod.fallSpeed;
             if (mod.stableReady && stableLayerHit(mod, p.x, p.y, p.z, StableLandBottom, StableLandTop)) {
-                mod.stable.stirRadial({p.x, p.z}, std::min(speed, 400.0f) * 0.5f * stableStirGain(mod), 70.0f);
+                const float gain = stableStirGain(mod) * (mod.attackPercent * 0.01f);
+                mod.stable.stirRadial({p.x, p.z}, std::min(speed, 400.0f) * 0.5f * gain, 70.0f);
                 ++mod.stirs;
             }
             if (affectFields(mod, [&](fog::Field& field) {
@@ -1517,7 +1518,7 @@ ShipNativeStatus SHIP_NATIVE_CALL draw(void* user, const ShipNativeHookCall* cal
         const ShipOotFogGridV1 grid{sizeof(grid), side, side,
                                     mod.field.worldX(0), mod.field.worldX(side - 1),
                                     mod.field.worldZ(0), mod.field.worldZ(side - 1),
-                                    mod.layerHeight, mod.falloff, mod.extinction * density,
+                                    mod.layerHeight, mod.falloff, fog::volumeExtinction(mod.extinction, density),
                                     play->sceneNum == SCENE_KOKIRI_FOREST ? KokiriEdgeFeather : 110.0f,
                                     {color[0], color[1], color[2]}, cells};
         auto status = SHIP_NATIVE_UNSUPPORTED;
@@ -1641,12 +1642,7 @@ ShipNativeStatus SHIP_NATIVE_CALL draw(void* user, const ShipNativeHookCall* cal
                 __gSPVertex(g++, reinterpret_cast<uintptr_t>(vertices), 2 * (quads + 1), 0);
                 for (int i = 0; i < quads; ++i) {
                     const int x = start + i;
-                    const auto& a = fallback.cell(x, z);
-                    const auto& b = fallback.cell(x + 1, z);
-                    const auto& c = fallback.cell(x, z + 1);
-                    const auto& d = fallback.cell(x + 1, z + 1);
-                    if (!fog::Field::connected(a, b) || !fog::Field::connected(a, c) ||
-                        !fog::Field::connected(d, b) || !fog::Field::connected(d, c)) continue;
+                    if (!fallback.surfaceQuadOpen(x, z)) continue;
                     const int v = 2 * i;
                     gSP2Triangles(g++, v, v + 1, v + 2, 0, v + 2, v + 1, v + 3, 0);
                 }

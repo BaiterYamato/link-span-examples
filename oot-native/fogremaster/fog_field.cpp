@@ -191,6 +191,7 @@ bool Field::disturbMotion(Point a, Point b, float radius, float bottom, float to
                           float radialBase) {
     const float dx = b.x - a.x;
     const float dz = b.z - a.z;
+    const float dy = b.y - a.y;
     const float len2 = dx * dx + dz * dz;
     const float maxX = worldX(Side - 1);
     const float maxZ = worldZ(Side - 1);
@@ -207,9 +208,21 @@ bool Field::disturbMotion(Point a, Point b, float radius, float bottom, float to
             const Cell& c = cells_[index(x, z)];
             if (!c.open) continue;
             const float ax = worldX(x) - a.x, az = worldZ(z) - a.z;
-            const float t = len2 > 0.01f ? std::clamp((ax * dx + az * dz) / len2, 0.0f, 1.0f) : 0.0f;
-            const float y = std::lerp(a.y, b.y, t);
-            if (y + bottom > c.floor + LayerHeight || y + top < c.floor) continue;
+            // Find the closest point only on the part of the sweep that overlaps this layer.
+            const float lowY = c.floor - top;
+            const float highY = c.floor + LayerHeight - bottom;
+            float first = 0.0f, last = 1.0f;
+            if (dy == 0.0f) {
+                if (a.y < lowY || a.y > highY) continue;
+            } else {
+                const float enter = (lowY - a.y) / dy;
+                const float leave = (highY - a.y) / dy;
+                first = std::max(first, std::min(enter, leave));
+                last = std::min(last, std::max(enter, leave));
+                if (last < first) continue;
+            }
+            const float nearest = len2 > 0.01f ? (ax * dx + az * dz) / len2 : first;
+            const float t = std::clamp(nearest, first, last);
             const float offsetX = ax - t * dx, offsetZ = az - t * dz;
             const float d = std::sqrt(offsetX * offsetX + offsetZ * offsetZ);
             if (d >= radius) continue;
@@ -490,7 +503,7 @@ float Field::circulation(float x, float z) const {
 }
 
 float Field::lowestDensity(float x, float z, float radius) const {
-    float lowest = 1.0f;
+    float lowest = MaxDensity;
     bool found = false;
     for (int cz = 0; cz < Side; ++cz) {
         for (int cx = 0; cx < Side; ++cx) {
@@ -501,6 +514,10 @@ float Field::lowestDensity(float x, float z, float radius) const {
         }
     }
     return found ? lowest : RestDensity;
+}
+
+float volumeExtinction(float extinction, float densityScale) {
+    return std::clamp(extinction * densityScale, 0.0f, 1.0f);
 }
 
 SolverOptions shallowOptions() {
@@ -523,6 +540,12 @@ bool Field::link(int x, int z, int nx, int nz) const {
     const auto& b = cells_[index(nx, nz)];
     const int d = nx < x ? 0 : nx > x ? 1 : nz < z ? 2 : 3;
     return connected(a, b) && !(a.blocked & (1u << d)) && !(b.blocked & (1u << (d ^ 1)));
+}
+
+bool Field::surfaceQuadOpen(int x, int z) const {
+    if (x < 0 || z < 0 || x >= Side - 1 || z >= Side - 1) return false;
+    return link(x, z, x + 1, z) && link(x, z, x, z + 1) &&
+           link(x + 1, z + 1, x + 1, z) && link(x + 1, z + 1, x, z + 1);
 }
 
 Point Field::trace(int x, int z, float dx, float dz) const {
